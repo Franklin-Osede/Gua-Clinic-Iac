@@ -1,0 +1,191 @@
+@import "primereact/resources/themes/saga-blue/theme.css";
+@import "primereact/resources/primereact.min.css";
+@import "primeicons/primeicons.css";
+
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+@font-face {
+  font-family: "Work Sans";
+  src: url("../fonts/WorkSans-Regular.ttf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Work Sans";
+  src: url("../fonts/WorkSans-Medium.ttf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Work Sans";
+  src: url("../fonts/WorkSans-SemiBold.ttf") format("opentype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Work Sans";
+  src: url("../fonts/WorkSans-Bold.ttf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Work Sans";
+  src: url("../fonts/WorkSans-Italic.ttf") format("opentype");
+  font-weight: normal;
+  font-style: italic;
+  font-display: swap;
+}
+
+body {
+  font-family: "Work Sans", sans-serif;
+  color: #242424;
+}
+
+h1 {
+  font-size: 18px;
+}
+
+h2 {
+  font-size: 16px;
+}
+
+h3 {
+  font-size: 12px;
+}
+
+p {
+  font-size: 10px !important;
+}
+
+ul {
+  font-size: 10px !important;
+}
+
+@media (min-width: 768px) {
+  h1 {
+    font-size: 2.5vw;
+  }
+
+  h2 {
+    font-size: 2vw;
+  }
+
+  h3 {
+    font-size: 1.5vw;
+  }
+
+  p {
+    font-size: 1.25vw;
+  }
+
+  ul {
+    font-size: 1vw;
+  }
+}
+
+@media (min-width: 1024px) {
+  h1 {
+    font-size: 1.5vw;
+  }
+
+  h2 {
+    font-size: 1vw;
+  }
+
+  h3 {
+    font-size: 0.85vw;
+  }
+
+  p {
+    font-size: 0.75vw !important;
+  }
+
+  ul {
+    font-size: 0.75vw !important;
+  }
+}
+
+.react-calendar {
+  width: 100%;
+  max-width: 325px;
+  background: #efefef;
+  border-radius: 24px;
+  font-family: "Work Sans", serif;
+  padding: 1.5rem;
+}
+
+@media (min-width: 1536px) {
+  .react-calendar {
+    max-width: 325px;
+  }
+}
+
+@media (max-width: 450px) {
+  .react-calendar {
+    max-width: 325px;
+    padding: 1rem;
+    border-radius: 16px;
+    font-size: 12px;
+  }
+
+  .react-calendar__tile {
+    width: 2rem;
+    height: 2rem;
+    padding: 0.1rem;
+  }
+}
+
+.react-calendar__navigation {
+  padding: 0.5rem;
+}
+
+abbr[title] {
+  text-decoration: none !important;
+}
+
+.react-calendar__month-view__weekdays {
+  text-align: center;
+  color: #333;
+}
+
+.react-calendar__tile {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0.5rem;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-inline-end: unset !important;
+}
+
+.react-calendar__tile.available-date {
+  background-color: #ffcc00;
+  color: #333;
+}
+
+.react-calendar__tile.selected-date {
+  background-color: black;
+  color: white;
+}
+
+.react-calendar__tile.available-date-selected {
+  background-color: #ffcc00;
+  color: black;
+}
+
+.react-calendar__navigation__label__labelText,
+.react-calendar__navigation__label__labelText--from {
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+}
