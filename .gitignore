@@ -10,6 +10,8 @@ dist/
 build/
 .next/
 out/
+*.js.map
+*.css.map
 
 # Environment variables
 .env
