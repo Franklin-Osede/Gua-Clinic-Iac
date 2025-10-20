@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common'
+import { ConfigModule } from '@nestjs/config'
+import { HttpModule } from '@nestjs/axios'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { BootstrapController } from './bootstrap/bootstrap.controller'
@@ -15,9 +17,17 @@ import { AppointmentsController } from './appointments/appointments.controller'
 import { AppointmentsService } from './appointments/appointments.service'
 import { AppointmentsTypesController } from './appointments-types/appointments-types.controller'
 import { AppointmentsTypesService } from './appointments-types/appointments-types.service'
+import { DriCloudModule } from './dricloud/dricloud.module'
+import { DriCloudService } from './dricloud/dricloud.service'
 
 @Module({
-  imports: [],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    HttpModule,
+    DriCloudModule,
+  ],
   controllers: [
     AppController, 
     BootstrapController,
@@ -36,7 +46,8 @@ import { AppointmentsTypesService } from './appointments-types/appointments-type
     DoctorAvailabilityService,
     PatientsService,
     AppointmentsService,
-    AppointmentsTypesService
+    AppointmentsTypesService,
+    DriCloudService
   ],
 })
 export class AppModule {}

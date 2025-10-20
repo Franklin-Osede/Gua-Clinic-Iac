@@ -63,3 +63,4 @@ export class PatientsController {
     return this.patientsService.createEncryptedPatient(encryptedPatientDto)
   }
 }
+

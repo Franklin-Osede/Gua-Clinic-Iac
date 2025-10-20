@@ -52,3 +52,4 @@ export class AppointmentsTypesController {
     return this.appointmentsTypesService.getAppointmentTypes(serviceId, type)
   }
 }
+

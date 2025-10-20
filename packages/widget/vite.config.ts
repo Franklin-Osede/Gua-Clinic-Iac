@@ -1,14 +1,20 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import path from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      "@gua/shared": path.resolve(__dirname, "../shared/src"),
+    },
+  },
   define: {
     // Variables de entorno para desarrollo
     'import.meta.env.VITE_AES_KEY': JSON.stringify('dGVzdC1hZXMta2V5LWZvci1kZXZlbG9wbWVudA=='),
     'import.meta.env.VITE_GUA_SERVICE_URL': JSON.stringify('http://localhost:3000'),
-    'import.meta.env.VITE_API_BEARER_TOKEN': JSON.stringify('test-bearer-token'),
+    // ❌ TOKEN HARDCODEADO ELIMINADO - Ahora se obtiene del endpoint /bootstrap
   },
   build: {
     lib: {
@@ -26,10 +32,5 @@ export default defineConfig({
         }
       }
     }
-  },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/test/setup.ts']
   }
 });

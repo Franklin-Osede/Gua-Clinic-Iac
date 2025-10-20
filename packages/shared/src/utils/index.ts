@@ -76,3 +76,4 @@ export const isValidVAT = (vat: string): boolean => {
   return vatRegex.test(vat.toUpperCase())
 }
 
+

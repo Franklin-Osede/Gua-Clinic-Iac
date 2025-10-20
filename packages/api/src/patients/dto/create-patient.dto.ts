@@ -107,3 +107,4 @@ export class CreatePatientDto {
   @IsString()
   medicalInfo?: string
 }
+

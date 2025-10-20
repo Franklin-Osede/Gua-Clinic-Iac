@@ -4,11 +4,10 @@ import { decryptData, encryptData } from "./AESencryption.ts";
 
 const GUA_SERVICE_URL = import.meta.env.VITE_GUA_SERVICE_URL;
 
+// ✅ TOKEN HARDCODEADO ELIMINADO - Ahora se obtiene del endpoint /bootstrap
 const apiClient = axios.create({
   baseURL: GUA_SERVICE_URL,
-  headers: {
-    Authorization: `Bearer ${import.meta.env.VITE_API_BEARER_TOKEN}`,
-  },
+  withCredentials: true, // Para enviar cookies de sesión
 });
 
 export const getMedicalSpecialties = async () => {

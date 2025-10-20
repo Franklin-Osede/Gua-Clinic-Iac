@@ -11,3 +11,4 @@ export class PatientVatDto {
   @IsNotEmpty()
   encrypted_vat: string
 }
+

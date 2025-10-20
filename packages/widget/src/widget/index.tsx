@@ -1,4 +1,3 @@
-import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from '../App'
 
@@ -67,4 +66,5 @@ customElements.define('gua-widget', GuaWidget)
 // Exportar para uso programático
 export { GuaWidget }
 export default GuaWidget
+
 
