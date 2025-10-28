@@ -13,7 +13,9 @@ const apiClient = axios.create({
 export const getMedicalSpecialties = async () => {
   try {
     const response = await apiClient.get(`/medical-specialties`);
-    return response.data;
+    // El backend devuelve { Successful: true, Data: { Especialidades: [...] } }
+    // Necesitamos extraer el array de especialidades
+    return response.data.Data?.Especialidades || [];
   } catch (error) {
     console.error("Error fetching medical specialties data:", error);
     throw error;
@@ -27,7 +29,9 @@ export const getAppointmentTypes = async (serviceId: number, type?: string) => {
       : `/appointments-types/${serviceId}`;
 
     const response = await apiClient.get(url);
-    return response.data;
+    // DriCloud devuelve { Successful: true, Data: [...] }
+    // Necesitamos extraer el array de tipos de cita
+    return response.data.Data || [];
   } catch (error) {
     console.error("Error fetching appointment types data:", error);
     throw error;
@@ -41,7 +45,9 @@ export const getDoctors = async (serviceId: number) => {
 
   try {
     const response = await apiClient.get(`/doctors/${serviceId}`);
-    return response.data;
+    // DriCloud devuelve { Successful: true, Data: [...] }
+    // Necesitamos extraer el array de doctores
+    return response.data.Data || [];
   } catch (error) {
     console.error("Error fetching doctors data:", error);
     throw error;

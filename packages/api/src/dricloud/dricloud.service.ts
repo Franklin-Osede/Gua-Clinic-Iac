@@ -378,35 +378,64 @@ export class DriCloudService {
 
   // Métodos para llamadas a la API
   async getMedicalSpecialties() {
-    const cacheKey = 'medical-specialties';
-    
-    // Intentar obtener del caché primero
-    const cachedData = await this.dynamoDBService.getFromCache(cacheKey);
-    if (cachedData) {
-      this.logger.debug('Medical specialties served from cache');
-      return cachedData;
+    try {
+      this.logger.debug(`🔍 DEBUGGING: Starting getMedicalSpecialties`);
+      this.logger.debug(`🔍 DEBUGGING: isMockMode: ${this.isMockMode}`);
+      
+      // 🔒 DEBUGGING SEGURO: Usar modo mock para no afectar Ovianta
+      if (this.isMockMode) {
+        this.logger.log('🎭 DEBUGGING: Using mock data for medical-specialties');
+        const mockResult = {
+          Successful: true,
+          Data: {
+            Especialidades: [
+              { ESP_ID: 1, ESP_NOMBRE: 'Cardiología (Mock)' },
+              { ESP_ID: 2, ESP_NOMBRE: 'Dermatología (Mock)' },
+              { ESP_ID: 3, ESP_NOMBRE: 'Ginecología (Mock)' },
+              { ESP_ID: 4, ESP_NOMBRE: 'Pediatría (Mock)' },
+              { ESP_ID: 5, ESP_NOMBRE: 'Traumatología (Mock)' }
+            ]
+          },
+          Html: 'Mock data for debugging'
+        };
+        this.logger.debug(`🔍 DEBUGGING: Mock result: ${JSON.stringify(mockResult)}`);
+        return mockResult;
+      }
+      
+      const cacheKey = 'medical-specialties';
+      
+      // Intentar obtener del caché primero
+      const cachedData = await this.dynamoDBService.getFromCache(cacheKey);
+      if (cachedData) {
+        this.logger.debug('Medical specialties served from cache');
+        return cachedData;
+      }
+
+      // Usar método resiliente con Circuit Breaker
+      const result = await this.resilientDriCloudRequest(
+        async () => {
+          const token = await this.getValidToken();
+          const response = await this.httpService.post(
+            `https://apidricloud.dricloud.net/${await this.getClinicUrl()}/api/APIWeb/GetEspecialidades`,
+            { CLI_ID: this.credentials?.DRICLOUD_CLINIC_ID },
+            { headers: { USU_APITOKEN: token } }
+          ).toPromise();
+          
+          return response.data;
+        },
+        undefined, // No fallback específico, usará datos mínimos
+        'medical-specialties'
+      );
+
+      // Guardar en caché por 10 minutos
+      await this.dynamoDBService.setCache(cacheKey, result, 10);
+      
+      return result;
+    } catch (error) {
+      this.logger.error(`❌ DEBUGGING: Error in getMedicalSpecialties: ${error.message}`);
+      this.logger.error(`❌ DEBUGGING: Error stack: ${error.stack}`);
+      throw error;
     }
-
-    // Usar método resiliente con Circuit Breaker
-    const result = await this.resilientDriCloudRequest(
-      async () => {
-        const token = await this.getValidToken();
-        const response = await this.httpService.post(
-          `https://apidricloud.dricloud.net/${await this.getClinicUrl()}/api/APIWeb/GetEspecialidades`,
-          { CLI_ID: this.credentials?.DRICLOUD_CLINIC_ID },
-          { headers: { USU_APITOKEN: token } }
-        ).toPromise();
-        
-        return response.data;
-      },
-      undefined, // No fallback específico, usará datos mínimos
-      'medical-specialties'
-    );
-
-    // Guardar en caché por 10 minutos
-    await this.dynamoDBService.setCache(cacheKey, result, 10);
-    
-    return result;
   }
 
   async getDoctors(espId: number) {
