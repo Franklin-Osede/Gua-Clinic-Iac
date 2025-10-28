@@ -1,29 +1,28 @@
 import { Injectable, BadRequestException, ConflictException } from '@nestjs/common'
 import { CreateAppointmentDto } from './dto/create-appointment.dto'
+import { DriCloudService } from '../dricloud/dricloud.service'
 
 @Injectable()
 export class AppointmentsService {
-  async createAppointment(createAppointmentDto: CreateAppointmentDto) {
-    try {
-      // TODO: Implementar creación en DriCloud
-      // Por ahora retornamos datos mock
-      const mockAppointmentId = Math.floor(Math.random() * 10000) + 1
+  constructor(private driCloudService: DriCloudService) {}
 
+  async createAppointment(createAppointmentDto: CreateAppointmentDto) {
+    // DriCloudService ya tiene protección automática
+    const response = await this.driCloudService.createAppointment(createAppointmentDto)
+    
+    if (response.Successful) {
       return {
-        appointmentId: mockAppointmentId,
+        appointmentId: response.Data.CPA_ID,
         message: 'Cita creada exitosamente',
         appointment: {
           ...createAppointmentDto,
-          id: mockAppointmentId,
+          id: response.Data.CPA_ID,
           status: 'confirmed',
           createdAt: new Date().toISOString()
         }
       }
-    } catch (error) {
-      if (error.message.includes('conflict')) {
-        throw new ConflictException('Ya existe una cita en ese horario')
-      }
-      throw new BadRequestException('Error al crear la cita')
+    } else {
+      throw new Error(response.Html || 'Error al crear cita en DriCloud')
     }
   }
 }

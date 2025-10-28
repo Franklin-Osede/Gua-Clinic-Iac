@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GUA Clinic Widget - Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .code-block {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #007cba;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        .widget-container {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            background: #fafafa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 GUA Clinic Widget - Página de Prueba</h1>
+        
+        <div class="test-section">
+            <h3>📋 Instrucciones de Prueba</h3>
+            <p>Esta página te permite probar el widget antes de integrarlo en WordPress.</p>
+            
+            <div class="code-block">
+                <strong>Para probar en WordPress:</strong><br>
+                1. Copia el archivo gua-clinic-widget.php a /wp-content/plugins/<br>
+                2. Activa el plugin en WordPress<br>
+                3. Usa el shortcode: [gua_clinic_widget]
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🎯 Widget en Acción</h3>
+            <p>El widget aparecerá aquí cuando esté configurado correctamente:</p>
+            
+            <div class="widget-container">
+                <div id="gua-widget-container">
+                    <p>🔄 Cargando widget...</p>
+                    <p><small>Nota: El widget se conectará a la API cuando tengas las credenciales de DriCloud</small></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>⚙️ Configuración del Widget</h3>
+            <p>Puedes personalizar el widget con estos parámetros:</p>
+            
+            <div class="code-block">
+                <strong>Shortcode básico:</strong><br>
+                [gua_clinic_widget]
+            </div>
+            
+            <div class="code-block">
+                <strong>Con parámetros:</strong><br>
+                [gua_clinic_widget locale="es" theme="light" api_url="https://api.guaclinic.com"]
+            </div>
+            
+            <div class="code-block">
+                <strong>Parámetros disponibles:</strong><br>
+                • locale: "es" | "en" (idioma)<br>
+                • theme: "light" | "dark" (tema)<br>
+                • api_url: URL de la API (opcional)
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🚀 Próximos Pasos</h3>
+            <ol>
+                <li><strong>Esperar credenciales de DriCloud</strong> - Para conectar con la API real</li>
+                <li><strong>Configurar AWS</strong> - Para desplegar la API en producción</li>
+                <li><strong>Subir widget a CDN</strong> - Para que WordPress pueda cargarlo</li>
+                <li><strong>Probar en WordPress</strong> - Instalar plugin y probar</li>
+            </ol>
+        </div>
+        
+        <div class="test-section">
+            <h3>📞 Soporte</h3>
+            <p>Si tienes problemas con el widget:</p>
+            <ul>
+                <li>Verifica que la API esté funcionando</li>
+                <li>Revisa la consola del navegador para errores</li>
+                <li>Confirma que las credenciales de DriCloud sean correctas</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // Simular carga del widget (solo para demostración)
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🏥 GUA Clinic Widget - Página de prueba cargada');
+            console.log('📋 Widget listo para integrar en WordPress');
+            console.log('⏳ Esperando credenciales de DriCloud...');
+        });
+    </script>
+</body>
+</html>
+
+
+

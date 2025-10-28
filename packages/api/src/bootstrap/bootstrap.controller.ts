@@ -1,27 +1,36 @@
-import { Controller, Get, Res } from '@nestjs/common'
-import { Response } from 'express'
-import { BootstrapService } from './bootstrap.service'
+import { Controller, Get } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+@ApiTags('bootstrap')
 @Controller('bootstrap')
 export class BootstrapController {
-  constructor(private readonly bootstrapService: BootstrapService) {}
-
   @Get()
-  async bootstrap(@Res({ passthrough: true }) res: Response) {
-    const sessionData = await this.bootstrapService.createSession()
-    
-    // Configurar cookie HttpOnly
-    res.cookie('session', sessionData.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 15 * 60 * 1000, // 15 minutos
-    })
-
+  @ApiOperation({ 
+    summary: 'Bootstrap endpoint',
+    description: 'Returns session data and initial configuration'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Bootstrap data retrieved successfully'
+  })
+  getBootstrap() {
     return {
-      locale: sessionData.locale,
-      theme: sessionData.theme,
-      features: sessionData.features,
-    }
+      session: {
+        id: 'session_' + Date.now(),
+        expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 min
+        locale: 'es',
+        theme: 'light'
+      },
+      config: {
+        features: {
+          virtualAppointments: true,
+          physicalAppointments: true
+        },
+        limits: {
+          maxAppointmentsPerDay: 10
+        }
+      },
+      timestamp: new Date().toISOString()
+    };
   }
 }

@@ -1,20 +1,21 @@
-import { Injectable } from '@nestjs/common'
-import { randomBytes } from 'crypto'
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class BootstrapService {
-  async createSession() {
-    // Generar token de sesión
-    const token = randomBytes(32).toString('hex')
-    
+  getBootstrapData() {
     return {
-      token,
-      locale: 'es',
-      theme: 'light',
-      features: {
-        virtualAppointments: true,
-        physicalAppointments: true,
+      session: {
+        id: 'session_' + Date.now(),
+        expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+        locale: 'es',
+        theme: 'light'
       },
-    }
+      config: {
+        features: {
+          virtualAppointments: true,
+          physicalAppointments: true
+        }
+      }
+    };
   }
 }

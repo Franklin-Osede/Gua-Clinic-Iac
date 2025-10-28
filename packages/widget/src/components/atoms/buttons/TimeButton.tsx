@@ -1,5 +1,5 @@
 import React from "react";
-import { convertTo24HourFormat } from "../../../services/utils.ts";
+import { convertTo24HourFormat } from "@gua/shared";
 
 interface TimeButtonProps {
   id: number;

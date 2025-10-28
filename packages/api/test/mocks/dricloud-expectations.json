@@ -1,0 +1,101 @@
+{
+  "expectations": [
+    {
+      "id": "login-expectation",
+      "httpRequest": {
+        "method": "POST",
+        "path": "/api/APIWeb/LoginExternalHash"
+      },
+      "httpResponse": {
+        "statusCode": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "Successful": true,
+          "Data": {
+            "USU_APITOKEN": "mock-token-12345"
+          }
+        }
+      }
+    },
+    {
+      "id": "specialties-expectation",
+      "httpRequest": {
+        "method": "POST",
+        "path": "/api/APIWeb/GetEspecialidades"
+      },
+      "httpResponse": {
+        "statusCode": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "Successful": true,
+          "Data": [
+            {
+              "ESP_ID": 1,
+              "ESP_NOMBRE": "Urología",
+              "ESP_DESCRIPCION": "Especialidad en urología"
+            },
+            {
+              "ESP_ID": 2,
+              "ESP_NOMBRE": "Andrología",
+              "ESP_DESCRIPCION": "Especialidad en andrología"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "doctors-expectation",
+      "httpRequest": {
+        "method": "POST",
+        "path": "/api/APIWeb/GetDoctores"
+      },
+      "httpResponse": {
+        "statusCode": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "Successful": true,
+          "Data": [
+            {
+              "USU_ID": 1,
+              "USU_NOMBRE": "Dr. García",
+              "USU_APELLIDOS": "López",
+              "ESP_ID": 1
+            },
+            {
+              "USU_ID": 2,
+              "USU_NOMBRE": "Dr. Martínez",
+              "USU_APELLIDOS": "Ruiz",
+              "ESP_ID": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "token-conflict-expectation",
+      "httpRequest": {
+        "method": "POST",
+        "path": "/api/APIWeb/GetEspecialidades"
+      },
+      "httpResponse": {
+        "statusCode": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "Successful": false,
+          "Html": "Token incorrecto",
+          "Data": {
+            "ErrorCode": -1
+          }
+        }
+      }
+    }
+  ]
+}

@@ -108,3 +108,10 @@ export class CreatePatientDto {
   medicalInfo?: string
 }
 
+
+
+
+
+
+
+

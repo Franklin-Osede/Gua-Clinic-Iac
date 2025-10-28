@@ -1,96 +1,62 @@
-import { ApiProperty } from '@nestjs/swagger'
-import { IsString, IsNumber, IsDateString, IsOptional, IsBoolean } from 'class-validator'
+import { IsNumber, IsString, IsNotEmpty, IsOptional, IsDateString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateAppointmentDto {
   @ApiProperty({
     description: 'ID del paciente',
-    example: 123,
-    type: 'number'
+    example: 123
   })
   @IsNumber()
-  patientId: number
+  @IsNotEmpty()
+  PAC_ID: number;
 
   @ApiProperty({
     description: 'ID del doctor',
-    example: 456,
-    type: 'number'
+    example: 456
   })
   @IsNumber()
-  doctorId: number
+  @IsNotEmpty()
+  USU_ID: number;
 
   @ApiProperty({
     description: 'ID del tipo de cita',
-    example: 789,
-    type: 'number'
+    example: 789
   })
   @IsNumber()
-  appointmentTypeId: number
+  @IsNotEmpty()
+  TIP_ID: number;
 
   @ApiProperty({
-    description: 'Fecha de la cita',
-    example: '2024-12-25',
-    format: 'date'
+    description: 'Fecha de la cita (YYYY-MM-DD)',
+    example: '2024-01-15'
   })
   @IsDateString()
-  date: string
+  @IsNotEmpty()
+  FECHA: string;
 
   @ApiProperty({
-    description: 'Hora de la cita',
-    example: '10:00',
-    pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+    description: 'Hora de la cita (HH:MM)',
+    example: '10:30'
   })
   @IsString()
-  time: string
+  @IsNotEmpty()
+  HORA: string;
 
   @ApiProperty({
-    description: 'Duración de la cita en minutos',
-    example: 30,
-    type: 'number'
-  })
-  @IsNumber()
-  duration: number
-
-  @ApiProperty({
-    description: 'Tipo de cita (virtual o presencial)',
-    example: 'virtual',
-    enum: ['virtual', 'presencial']
-  })
-  @IsString()
-  type: string
-
-  @ApiProperty({
-    description: 'Precio de la cita',
-    example: 50.00,
-    type: 'number'
-  })
-  @IsNumber()
-  price: number
-
-  @ApiProperty({
-    description: 'Notas adicionales de la cita',
-    example: 'Primera consulta, traer análisis recientes',
+    description: 'Observaciones adicionales (opcional)',
+    example: 'Primera consulta',
     required: false
   })
-  @IsOptional()
   @IsString()
-  notes?: string
+  @IsOptional()
+  OBSERVACIONES?: string;
 
   @ApiProperty({
-    description: 'Indica si es una cita de urgencia',
-    example: false,
-    type: 'boolean',
+    description: 'Tipo de cita (presencial/virtual)',
+    example: 'presencial',
     required: false
   })
-  @IsOptional()
-  @IsBoolean()
-  isUrgent?: boolean
-
-  @ApiProperty({
-    description: 'Información médica relevante',
-    example: 'Alergias: Penicilina',
-    required: false
-  })
-  @IsOptional()
   @IsString()
-  medicalInfo?: string
+  @IsOptional()
+  TIPO_CITA?: string;
 }

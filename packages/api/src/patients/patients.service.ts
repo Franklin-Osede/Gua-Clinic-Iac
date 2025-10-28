@@ -2,58 +2,53 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { CreatePatientDto } from './dto/create-patient.dto'
 import { PatientVatDto } from './dto/patient-vat.dto'
 import { EncryptedPatientDto } from './dto/encrypted-patient.dto'
+import { DriCloudService } from '../dricloud/dricloud.service'
 
 @Injectable()
 export class PatientsService {
+  constructor(private driCloudService: DriCloudService) {}
   async getPatientByVat(patientVatDto: PatientVatDto) {
-    try {
-      // TODO: Implementar desencriptación y búsqueda en DriCloud
-      // Por ahora retornamos datos mock
-      const mockPatient = {
-        id: 123,
-        name: 'Juan',
-        lastName: 'Pérez',
-        email: 'juan.perez@email.com',
-        phone: '+34612345678',
-        dni: '12345678A',
-        birthDate: '1990-01-15',
-        gender: 'M'
-      }
-
-      return mockPatient
-    } catch (error) {
+    // DriCloudService ya tiene protección automática
+    const response = await this.driCloudService.getPatientByNIF(patientVatDto.nif)
+    
+    if (response.Successful && response.Data) {
+      return response.Data
+    } else {
       throw new NotFoundException('Paciente no encontrado')
     }
   }
 
   async createEncryptedPatient(encryptedPatientDto: EncryptedPatientDto) {
-    try {
-      // TODO: Implementar desencriptación y creación en DriCloud
-      // Por ahora retornamos ID mock
-      const mockPatientId = Math.floor(Math.random() * 1000) + 1
-
+    // DriCloudService ya tiene protección automática
+    const response = await this.driCloudService.createPatient(encryptedPatientDto)
+    
+    if (response.Successful) {
       return {
-        PAC_ID: mockPatientId,
+        PAC_ID: response.Data.PAC_ID,
         message: 'Paciente creado exitosamente'
       }
-    } catch (error) {
-      throw new BadRequestException('Error al crear paciente')
+    } else {
+      throw new BadRequestException(response.Html || 'Error al crear paciente')
     }
   }
 
   async createPatient(createPatientDto: CreatePatientDto) {
-    try {
-      // TODO: Implementar creación directa en DriCloud
-      const mockPatientId = Math.floor(Math.random() * 1000) + 1
-
+    // DriCloudService ya tiene protección automática
+    const response = await this.driCloudService.createPatient(createPatientDto)
+    
+    if (response.Successful) {
       return {
-        PAC_ID: mockPatientId,
+        PAC_ID: response.Data.PAC_ID,
         message: 'Paciente creado exitosamente',
         patient: createPatientDto
       }
-    } catch (error) {
-      throw new BadRequestException('Error al crear paciente')
+    } else {
+      throw new BadRequestException(response.Html || 'Error al crear paciente')
     }
   }
 }
+
+
+
+
 

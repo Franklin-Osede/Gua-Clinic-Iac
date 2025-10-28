@@ -77,3 +77,10 @@ export const isValidVAT = (vat: string): boolean => {
 }
 
 
+
+
+
+
+
+
+

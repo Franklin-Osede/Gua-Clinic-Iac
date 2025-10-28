@@ -19,6 +19,11 @@ import { AppointmentsTypesController } from './appointments-types/appointments-t
 import { AppointmentsTypesService } from './appointments-types/appointments-types.service'
 import { DriCloudModule } from './dricloud/dricloud.module'
 import { DriCloudService } from './dricloud/dricloud.service'
+import { RateLimitingModule } from './rate-limiting/rate-limiting.module'
+import { HealthModule } from './health/health.module'
+import { DatabaseModule } from './database/database.module'
+import { CircuitBreakerModule } from './circuit-breaker/circuit-breaker.module'
+import { SecretsModule } from './secrets/secrets.module'
 
 @Module({
   imports: [
@@ -27,6 +32,11 @@ import { DriCloudService } from './dricloud/dricloud.service'
     }),
     HttpModule,
     DriCloudModule,
+    RateLimitingModule,
+    HealthModule,
+    DatabaseModule,
+    CircuitBreakerModule,
+    SecretsModule,
   ],
   controllers: [
     AppController, 

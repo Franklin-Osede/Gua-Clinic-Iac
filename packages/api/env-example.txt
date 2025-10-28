@@ -1,0 +1,20 @@
+# Configuración de DriCloud para Testing
+# Copia este archivo como .env y configura tus credenciales
+
+# Entorno
+NODE_ENV=development
+DRICLOUD_TESTING_MODE=true
+
+# Credenciales DriCloud (WebAPI)
+DRICLOUD_WEBAPI_USER=tu_usuario_webapi
+DRICLOUD_WEBAPI_PASSWORD=tu_contraseña_webapi
+
+# Configuración de la clínica
+DRICLOUD_CLINIC_URL=Dricloud_gabinetedeurologiayandrologia_19748592
+DRICLOUD_CLINIC_ID=19748
+
+# Puerto de la API
+PORT=3000
+
+# CORS (para desarrollo)
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173,http://localhost:8080
