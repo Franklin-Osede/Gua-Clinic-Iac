@@ -14,7 +14,8 @@ async function bootstrap() {
       'http://localhost:5173',
       'http://localhost:8080',
       'http://localhost:8081',
-      'https://cdn.gua.com'
+      'https://cdn.gua.com',
+      'null' // Para archivos locales
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

@@ -423,19 +423,43 @@ export class DriCloudService {
   }
 
   async getAppointmentTypes(serviceId: number) {
-    this.logger.debug(`Getting appointment types for serviceId: ${serviceId}`);
-    return this.makeDriCloudRequest(async () => {
-      const token = await this.getValidToken();
-      const clinicUrl = await this.getClinicUrl();
-      this.logger.debug(`Using clinic URL: ${clinicUrl}`);
+    try {
+      this.logger.debug(`🔍 DEBUGGING: Starting getAppointmentTypes with serviceId: ${serviceId}`);
+      this.logger.debug(`🔍 DEBUGGING: isMockMode: ${this.isMockMode}`);
       
-      const response = await this.httpService.post(
-        `https://apidricloud.dricloud.net/${clinicUrl}/api/APIWeb/GetTiposCita`,
-        { CLI_ID: this.credentials?.DRICLOUD_CLINIC_ID, SER_ID: serviceId },
-        { headers: { USU_APITOKEN: token } }
-      ).toPromise();
-      return response.data;
-    });
+      // 🔒 DEBUGGING SEGURO: Usar modo mock para no afectar Ovianta
+      if (this.isMockMode) {
+        this.logger.log('🎭 DEBUGGING: Using mock data for appointments-types');
+        const mockResult = {
+          Successful: true,
+          Data: [
+            { TIP_ID: 1, TIP_NOMBRE: 'Consulta General (Mock)' },
+            { TIP_ID: 2, TIP_NOMBRE: 'Consulta Especializada (Mock)' }
+          ],
+          Html: 'Mock data for debugging'
+        };
+        this.logger.debug(`🔍 DEBUGGING: Mock result: ${JSON.stringify(mockResult)}`);
+        return mockResult;
+      }
+      
+      this.logger.debug(`🔍 DEBUGGING: Making real DriCloud request`);
+      return this.makeDriCloudRequest(async () => {
+        const token = await this.getValidToken();
+        const clinicUrl = await this.getClinicUrl();
+        this.logger.debug(`Using clinic URL: ${clinicUrl}`);
+        
+        const response = await this.httpService.post(
+          `https://apidricloud.dricloud.net/${clinicUrl}/api/APIWeb/GetTiposCita`,
+          { CLI_ID: this.credentials?.DRICLOUD_CLINIC_ID, SER_ID: serviceId },
+          { headers: { USU_APITOKEN: token } }
+        ).toPromise();
+        return response.data;
+      });
+    } catch (error) {
+      this.logger.error(`❌ DEBUGGING: Error in getAppointmentTypes: ${error.message}`);
+      this.logger.error(`❌ DEBUGGING: Error stack: ${error.stack}`);
+      throw error;
+    }
   }
 
   async getDoctorAgenda(doctorId: number, startDate: string, datesToFetch: number = 31) {

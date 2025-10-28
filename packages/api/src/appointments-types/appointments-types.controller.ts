@@ -17,6 +17,15 @@ export class AppointmentsTypesController {
     description: 'Tipos de citas obtenidos exitosamente'
   })
   async getAppointmentTypes(@Param('serviceId') serviceId: number) {
-    return this.appointmentsTypesService.getAppointmentTypes(serviceId);
+    try {
+      console.log(`🔍 DEBUGGING: Controller received serviceId: ${serviceId}, type: ${typeof serviceId}`);
+      const result = await this.appointmentsTypesService.getAppointmentTypes(serviceId);
+      console.log(`🔍 DEBUGGING: Controller result: ${JSON.stringify(result)}`);
+      return result;
+    } catch (error) {
+      console.error(`❌ DEBUGGING: Controller error: ${error.message}`);
+      console.error(`❌ DEBUGGING: Controller error stack: ${error.stack}`);
+      throw error;
+    }
   }
 }
