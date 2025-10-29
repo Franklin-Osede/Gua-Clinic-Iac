@@ -29,6 +29,18 @@ export class MedicalSpecialtiesController {
   })
   @ApiResponse({ status: 500, description: 'Error interno del servidor' })
   async getMedicalSpecialties() {
-    return this.medicalSpecialtiesService.getMedicalSpecialties()
+    const specialties = await this.medicalSpecialtiesService.getMedicalSpecialties();
+    
+    // Asegurar que siempre devolvemos un array
+    if (Array.isArray(specialties)) {
+      return specialties;
+    }
+    
+    // Si viene en formato { Especialidades: [...] }, extraer el array
+    if (specialties && typeof specialties === 'object' && 'Especialidades' in specialties) {
+      return Array.isArray(specialties.Especialidades) ? specialties.Especialidades : [];
+    }
+    
+    return [];
   }
 }

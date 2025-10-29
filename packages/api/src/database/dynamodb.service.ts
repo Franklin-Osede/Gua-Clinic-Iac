@@ -215,7 +215,27 @@ export class DynamoDBService {
     }
   }
 
-  async setIdempotency(requestId: string, ttlMinutes: number = 5): Promise<void> {
+  async getIdempotentResponse<T>(requestId: string): Promise<T | null> {
+    try {
+      const params = {
+        TableName: 'gua-clinic-cache',
+        Key: { cacheKey: `idempotency:${requestId}` }
+      };
+
+      const result = await this.dynamoDB.get(params).promise();
+      
+      if (result.Item && result.Item.data) {
+        return result.Item.data as T;
+      }
+      
+      return null;
+    } catch (error) {
+      this.logger.error('Failed to get idempotent response:', error);
+      return null;
+    }
+  }
+
+  async setIdempotency(requestId: string, response: any, ttlMinutes: number = 10): Promise<void> {
     try {
       const ttl = Math.floor(Date.now() / 1000) + (ttlMinutes * 60);
       
@@ -223,7 +243,7 @@ export class DynamoDBService {
         TableName: 'gua-clinic-cache',
         Item: {
           cacheKey: `idempotency:${requestId}`,
-          data: { processed: true },
+          data: response, // Guardar la respuesta completa
           ttl,
           createdAt: new Date().toISOString()
         }

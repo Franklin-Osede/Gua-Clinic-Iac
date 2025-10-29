@@ -48,9 +48,13 @@ export class DriCloudMetrics {
   
   // Alarmas automáticas
   async createAlarms() {
+    // ARN del SNS Topic para alertas (configurado en AWS)
+    const snsTopicArn = 'arn:aws:sns:eu-north-1:258591805733:gua-clinic-dricloud-alerts';
+    
     // Alarma si hay >3 renovaciones en 5 minutos
     await this.cloudWatch.putMetricAlarm({
       AlarmName: 'DriCloud-HighTokenRefresh',
+      AlarmDescription: 'Alerta si hay muchas renovaciones de token (conflicto con Ovianta)',
       ComparisonOperator: 'GreaterThanThreshold',
       EvaluationPeriods: 1,
       MetricName: 'TokenRefreshCount',
@@ -59,12 +63,13 @@ export class DriCloudMetrics {
       Statistic: 'Sum',
       Threshold: 3,
       ActionsEnabled: true,
-      AlarmActions: ['arn:aws:sns:eu-west-1:123456789012:dricloud-alerts']
+      AlarmActions: [snsTopicArn]
     }).promise();
     
     // Alarma si hay errores frecuentes
     await this.cloudWatch.putMetricAlarm({
       AlarmName: 'DriCloud-HighErrorRate',
+      AlarmDescription: 'Alerta si hay muchos errores con DriCloud',
       ComparisonOperator: 'GreaterThanThreshold',
       EvaluationPeriods: 2,
       MetricName: 'ErrorCount',
@@ -73,7 +78,7 @@ export class DriCloudMetrics {
       Statistic: 'Sum',
       Threshold: 5,
       ActionsEnabled: true,
-      AlarmActions: ['arn:aws:sns:eu-west-1:123456789012:dricloud-alerts']
+      AlarmActions: [snsTopicArn]
     }).promise();
   }
   

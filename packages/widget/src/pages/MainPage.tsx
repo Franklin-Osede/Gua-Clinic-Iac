@@ -7,7 +7,7 @@ import AppointmentTypes from "../components/organisms/AppointmentTypes.tsx";
 import PatientRegistrationForm from "../components/organisms/PatientRegistrationForm.tsx";
 import AdditionalInformationForm from "../components/organisms/AdditionalInformationForm.tsx";
 import AppointmentConfirmed from "../components/organisms/AppointmentConfirmed.tsx";
-import { createAppointment, createPatient } from "../services/GuaAPIService.ts";
+import { createAppointment, createPatient, pollAppointmentStatus } from "../services/GuaAPIService.ts";
 import { formatAppointmentData, formatPatientData } from "@gua/shared";
 import IdentificationPatient from "../components/organisms/IdentificationPatient.tsx";
 import PatientVATForm from "../components/organisms/PatientVATForm.tsx";
@@ -83,6 +83,7 @@ const MainPage: React.FC = () => {
   const [showPatientError, setShowPatientError] = useState(false);
   const [isLoadingAppointment, setIsLoadingAppointment] = useState(false);
   const [showAppointmentError, setShowAppointmentError] = useState(false);
+  const [appointmentStatus, setAppointmentStatus] = useState<'processing' | 'confirmed' | 'failed' | null>(null);
 
   const handleCardClick = (
     activeId: number | null,
@@ -227,6 +228,7 @@ const MainPage: React.FC = () => {
   const handleAppointmentCreation = async () => {
     try {
       setIsLoadingAppointment(true);
+      setAppointmentStatus('processing');
 
       const doctorId =
         import.meta.env.VITE_IS_PROD === "true"
@@ -260,12 +262,41 @@ const MainPage: React.FC = () => {
         observations,
       );
 
-      await createAppointment(data);
+      // Crear cita y obtener trackingId
+      const appointmentResponse = await createAppointment(data);
+      const trackingId = appointmentResponse.trackingId;
 
-      setShowAppointmentError(false);
-      return true;
+      if (!trackingId) {
+        throw new Error('No se recibió trackingId de la respuesta');
+      }
+
+      // Hacer polling del estado hasta confirmación
+      const pollResult = await pollAppointmentStatus(
+        trackingId,
+        (status) => {
+          // Actualizar estado mientras se procesa
+          setAppointmentStatus(status as 'processing' | 'confirmed' | 'failed');
+        },
+        15, // 15 intentos = 30 segundos máximo
+        2000 // 2 segundos entre intentos
+      );
+
+      if (pollResult.confirmed) {
+        setAppointmentStatus('confirmed');
+        setShowAppointmentError(false);
+        return true;
+      } else {
+        // Si falló o hubo timeout
+        setAppointmentStatus('failed');
+        setShowAppointmentError(true);
+        setDisableNextButton(true);
+        setDisablePreviousButton(true);
+        console.error('Error al confirmar cita:', pollResult.errorMessage);
+        return false;
+      }
     } catch (error) {
       console.error("Error creating appointment:", error);
+      setAppointmentStatus('failed');
       setShowAppointmentError(true);
       setDisableNextButton(true);
       setDisablePreviousButton(true);
@@ -484,6 +515,7 @@ const MainPage: React.FC = () => {
             showError={showNoOptionError}
             showCreationError={showAppointmentError}
             loading={isLoadingAppointment}
+            processingStatus={appointmentStatus}
           />
         );
       case 9:

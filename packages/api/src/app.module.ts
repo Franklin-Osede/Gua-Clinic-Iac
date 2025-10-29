@@ -5,6 +5,7 @@ import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { BootstrapController } from './bootstrap/bootstrap.controller'
 import { BootstrapService } from './bootstrap/bootstrap.service'
+import { SessionService } from './bootstrap/session.service'
 import { MedicalSpecialtiesController } from './medical-specialties/medical-specialties.controller'
 import { MedicalSpecialtiesService } from './medical-specialties/medical-specialties.service'
 import { DoctorsController } from './doctors/doctors.controller'
@@ -51,6 +52,7 @@ import { SecretsModule } from './secrets/secrets.module'
   providers: [
     AppService, 
     BootstrapService,
+    SessionService,
     MedicalSpecialtiesService,
     DoctorsService,
     DoctorAvailabilityService,

@@ -187,6 +187,49 @@ export class DriCloudService {
     try {
       const result = await requestFn();
       
+      // ⚠️ IMPORTANTE: DriCloud devuelve HTTP 200 aunque haya error
+      // Debe verificarse después de obtener la respuesta, no solo en catch
+      if (this.isDriCloudTokenError(result)) {
+        this.logger.log('🔄 Token conflict detected in response (HTTP 200 but Successful: false), refreshing...');
+        this.smartRateLimitService.recordTokenRefresh();
+        await this.refreshToken();
+        
+        try {
+          const retryResult = await requestFn();
+          
+          // Verificar que el retry también sea exitoso
+          if (this.isDriCloudTokenError(retryResult)) {
+            throw new Error('Token refresh failed - still getting token error after refresh');
+          }
+          
+          // Log auditoría para retry exitoso
+          await this.logAuditRecord({
+            requestId,
+            timestamp: new Date().toISOString(),
+            endpoint: 'dricloud-api',
+            method: 'POST',
+            status: 'success',
+            responseTime: Date.now() - startTime,
+            errorMessage: 'Retry after token refresh (from Successful: false response)'
+          });
+          
+          return retryResult;
+        } catch (retryError) {
+          // Log auditoría para retry fallido
+          await this.logAuditRecord({
+            requestId,
+            timestamp: new Date().toISOString(),
+            endpoint: 'dricloud-api',
+            method: 'POST',
+            status: 'error',
+            responseTime: Date.now() - startTime,
+            errorMessage: retryError.message
+          });
+          
+          throw retryError;
+        }
+      }
+      
       // Enviar métricas de éxito
       await this.metrics.publishTokenMetrics({
         refreshCount: this.tokenRefreshCount,
@@ -453,40 +496,70 @@ export class DriCloudService {
 
   async getAppointmentTypes(serviceId: number) {
     try {
-      this.logger.debug(`🔍 DEBUGGING: Starting getAppointmentTypes with serviceId: ${serviceId}`);
-      this.logger.debug(`🔍 DEBUGGING: isMockMode: ${this.isMockMode}`);
+      this.logger.debug(`Starting getAppointmentTypes for ESP_ID: ${serviceId}`);
       
-      // 🔒 DEBUGGING SEGURO: Usar modo mock para no afectar Ovianta
-      if (this.isMockMode) {
-        this.logger.log('🎭 DEBUGGING: Using mock data for appointments-types');
-        const mockResult = {
-          Successful: true,
-          Data: [
-            { TIP_ID: 1, TIP_NOMBRE: 'Consulta General (Mock)' },
-            { TIP_ID: 2, TIP_NOMBRE: 'Consulta Especializada (Mock)' }
-          ],
-          Html: 'Mock data for debugging'
-        };
-        this.logger.debug(`🔍 DEBUGGING: Mock result: ${JSON.stringify(mockResult)}`);
-        return mockResult;
+      // ⚠️ IMPORTANTE: Según la documentación de DriCloud v2.3, NO existe endpoint GetTiposCita
+      // Los tipos de cita vienen dentro de cada especialidad en el campo "ListadoTIPO_CITA"
+      // Por lo tanto, obtenemos los tipos de cita desde las especialidades
+      
+      // Obtener todas las especialidades directamente desde DriCloud (sin pasar por el servicio cacheado)
+      const cacheKey = 'medical-specialties';
+      const cachedSpecialties = await this.dynamoDBService.getFromCache<any>(cacheKey);
+      
+      let specialties: any[] = [];
+      
+      if (cachedSpecialties) {
+        // Si hay caché, usar esos datos
+        if (Array.isArray(cachedSpecialties)) {
+          specialties = cachedSpecialties;
+        } else if (cachedSpecialties.Especialidades && Array.isArray(cachedSpecialties.Especialidades)) {
+          specialties = cachedSpecialties.Especialidades;
+        }
+      } else {
+        // Si no hay caché, hacer la petición directa
+        const response = await this.makeDriCloudRequest(async () => {
+          const token = await this.getValidToken();
+          const response = await this.httpService.post(
+            `https://apidricloud.dricloud.net/${await this.getClinicUrl()}/api/APIWeb/GetEspecialidades`,
+            { CLI_ID: this.credentials?.DRICLOUD_CLINIC_ID },
+            { headers: { USU_APITOKEN: token } }
+          ).toPromise();
+          return response.data;
+        });
+        
+        if (response && response.Data) {
+          if (response.Data.Especialidades && Array.isArray(response.Data.Especialidades)) {
+            specialties = response.Data.Especialidades;
+          } else if (Array.isArray(response.Data)) {
+            specialties = response.Data;
+          }
+        }
       }
       
-      this.logger.debug(`🔍 DEBUGGING: Making real DriCloud request`);
-      return this.makeDriCloudRequest(async () => {
-        const token = await this.getValidToken();
-        const clinicUrl = await this.getClinicUrl();
-        this.logger.debug(`Using clinic URL: ${clinicUrl}`);
-        
-        const response = await this.httpService.post(
-          `https://apidricloud.dricloud.net/${clinicUrl}/api/APIWeb/GetTiposCita`,
-          { CLI_ID: this.credentials?.DRICLOUD_CLINIC_ID, SER_ID: serviceId },
-          { headers: { USU_APITOKEN: token } }
-        ).toPromise();
-        return response.data;
-      });
+      // Buscar la especialidad específica (ESP_ID = serviceId)
+      const specialty = specialties.find((esp: any) => esp.ESP_ID === serviceId);
+      
+      if (!specialty) {
+        this.logger.debug(`Specialty ${serviceId} not found in ${specialties.length} specialties`);
+        return { Successful: true, Data: [] };
+      }
+      
+      // Extraer los tipos de cita de la especialidad
+      const appointmentTypes = specialty.ListadoTIPO_CITA || [];
+      
+      this.logger.debug(`Found ${appointmentTypes.length} appointment types for specialty ${serviceId}`);
+      
+      return {
+        Successful: true,
+        Data: appointmentTypes.map((tipo: any) => ({
+          TCI_ID: tipo.TCI_ID,
+          TCI_NOMBRE: tipo.TCI_NOMBRE,
+          TCI_MINUTOS_CITA: tipo.TCI_MINUTOS_CITA,
+          ImportePrivado: tipo.ImportePrivado
+        }))
+      };
     } catch (error) {
-      this.logger.error(`❌ DEBUGGING: Error in getAppointmentTypes: ${error.message}`);
-      this.logger.error(`❌ DEBUGGING: Error stack: ${error.stack}`);
+      this.logger.error(`Error in getAppointmentTypes: ${error.message}`);
       throw error;
     }
   }

@@ -3,21 +3,41 @@ import { AppModule } from './app.module'
 import { ValidationPipe } from '@nestjs/common'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { API_VERSION, API_NAME, API_DESCRIPTION } from './common/version'
+import * as cookieParser from 'cookie-parser'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
 
-  // Configurar CORS
-  app.enableCors({
-    origin: [
+  // Configurar cookie parser (debe ir antes de CORS)
+  app.use(cookieParser())
+
+  // Configurar CORS según entorno
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  let allowedOrigins: string[] = [];
+  
+  if (isProduction) {
+    // En producción, solo orígenes específicos
+    allowedOrigins = [
+      'https://www.guaclinic.com',
+      'https://guaclinic.com',
+      'https://cdn.gua.com',
+    ];
+  } else {
+    // En desarrollo, incluir localhost + archivos locales
+    allowedOrigins = [
       'http://localhost:3000',
       'http://localhost:5173',
       'http://localhost:5174',
       'http://localhost:8080',
       'http://localhost:8081',
       'https://cdn.gua.com',
-      'null' // Para archivos locales
-    ],
+      'null' // Solo en desarrollo para archivos locales
+    ];
+  }
+  
+  app.enableCors({
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'USU_APITOKEN'],

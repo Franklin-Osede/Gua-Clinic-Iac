@@ -10,6 +10,7 @@ interface AdditionalInformationFormProps {
   showError: boolean;
   showCreationError: boolean;
   loading: boolean;
+  processingStatus?: 'processing' | 'confirmed' | 'failed' | null;
 }
 
 const AdditionalInformationForm: React.FC<AdditionalInformationFormProps> = ({
@@ -19,6 +20,7 @@ const AdditionalInformationForm: React.FC<AdditionalInformationFormProps> = ({
   showError,
   showCreationError,
   loading,
+  processingStatus,
 }) => {
   const [description, setDescription] = useState<string>("");
   const [termsAccepted, setTermsAccepted] = useState<boolean>(false);
@@ -70,8 +72,13 @@ const AdditionalInformationForm: React.FC<AdditionalInformationFormProps> = ({
         </div>
       )}
       {loading && !showCreationError && (
-        <div className="min-h-[25rem] flex items-center justify-center">
+        <div className="min-h-[25rem] flex items-center justify-center flex-col">
           <PuffLoader size={30} color={"#9CA3AF"} loading={loading} />
+          {processingStatus === 'processing' && (
+            <p className="mt-4 text-primary-600 text-sm">
+              Procesando tu cita... Por favor espera.
+            </p>
+          )}
         </div>
       )}
       {!showCreationError && !loading && (
