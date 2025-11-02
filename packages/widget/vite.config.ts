@@ -35,12 +35,16 @@ export default defineConfig({
       formats: ['es', 'iife']
     },
     rollupOptions: {
-      external: ['react', 'react-dom'],
+      // NO marcar React como external - incluirlo en el bundle para WordPress
+      // external: ['react', 'react-dom'],
       output: {
         globals: {
           react: 'React',
           'react-dom': 'ReactDOM'
-        }
+        },
+        // Evitar conflictos con otras versiones de React
+        format: 'iife',
+        name: 'GuaWidget'
       }
     }
   }

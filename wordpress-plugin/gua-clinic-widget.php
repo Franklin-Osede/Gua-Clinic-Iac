@@ -2,7 +2,7 @@
 /**
  * Plugin Name: GUA Clinic Widget
  * Description: Widget para sistema de citas médicas GUA Clinic
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: GUA Clinic
  */
 
@@ -27,11 +27,23 @@ class GuaClinicWidget {
     public function enqueue_scripts() {
         // Solo cargar en páginas que usen el shortcode
         if (is_singular() && has_shortcode(get_post()->post_content, 'gua_clinic_widget')) {
+            // Cargar desde el directorio del plugin (más confiable)
+            $widget_url = plugins_url('gua-widget.iife.js', __FILE__);
+            
+            // Si no existe localmente, usar CDN como fallback
+            $widget_path = plugin_dir_path(__FILE__) . 'gua-widget.iife.js';
+            if (!file_exists($widget_path)) {
+                $widget_url = 'https://cdn.gua.com/gua-widget.js';
+            }
+            
+            // Agregar timestamp para evitar caché del navegador
+            $version = '1.0.1-' . filemtime($widget_path ?: __FILE__);
+            
             wp_enqueue_script(
                 'gua-widget',
-                'https://cdn.gua.com/gua-widget.js', // URL del CDN
+                $widget_url,
                 array(),
-                '1.0.0',
+                $version,
                 true
             );
         }
@@ -42,7 +54,7 @@ class GuaClinicWidget {
         $atts = shortcode_atts(array(
             'locale' => 'es',
             'theme' => 'light',
-            'api_url' => 'https://api.guaclinic.com' // URL de producción
+            'api_url' => 'https://4mbksaqi36.execute-api.eu-north-1.amazonaws.com/prod' // API Gateway HTTPS
         ), $atts);
         
         // Generar ID único para el contenedor
@@ -57,35 +69,49 @@ class GuaClinicWidget {
         </div>
         
         <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Configurar el widget
-            const container = document.getElementById('<?php echo esc_js($container_id); ?>');
+        (function() {
+            // Esperar a que el DOM esté completamente listo
+            function initWidget() {
+                const container = document.getElementById('<?php echo esc_js($container_id); ?>');
+                
+                if (!container) {
+                    console.error('GUA Widget: Container not found');
+                    return;
+                }
+                
+                // Crear el elemento del widget
+                const widget = document.createElement('gua-widget');
+                widget.setAttribute('locale', '<?php echo esc_js($atts['locale']); ?>');
+                widget.setAttribute('theme', '<?php echo esc_js($atts['theme']); ?>');
+                widget.setAttribute('base-url', '<?php echo esc_js($atts['api_url']); ?>');
+                
+                // Reemplazar el loading con el widget
+                container.innerHTML = '';
+                container.appendChild(widget);
+                
+                // Eventos del widget
+                widget.addEventListener('ready', function(event) {
+                    console.log('GUA Widget ready:', event.detail);
+                });
+                
+                widget.addEventListener('success', function(event) {
+                    console.log('GUA Widget success:', event.detail);
+                    // Aquí puedes mostrar notificaciones de éxito
+                });
+                
+                widget.addEventListener('error', function(event) {
+                    console.error('GUA Widget error:', event.detail);
+                    // Aquí puedes mostrar mensajes de error
+                });
+            }
             
-            // Crear el elemento del widget
-            const widget = document.createElement('gua-widget');
-            widget.setAttribute('locale', '<?php echo esc_js($atts['locale']); ?>');
-            widget.setAttribute('theme', '<?php echo esc_js($atts['theme']); ?>');
-            widget.setAttribute('base-url', '<?php echo esc_js($atts['api_url']); ?>');
-            
-            // Reemplazar el loading con el widget
-            container.innerHTML = '';
-            container.appendChild(widget);
-            
-            // Eventos del widget
-            widget.addEventListener('ready', function(event) {
-                console.log('GUA Widget ready:', event.detail);
-            });
-            
-            widget.addEventListener('success', function(event) {
-                console.log('GUA Widget success:', event.detail);
-                // Aquí puedes mostrar notificaciones de éxito
-            });
-            
-            widget.addEventListener('error', function(event) {
-                console.error('GUA Widget error:', event.detail);
-                // Aquí puedes mostrar mensajes de error
-            });
-        });
+            // Inicializar cuando el DOM esté listo
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initWidget);
+            } else {
+                initWidget();
+            }
+        })();
         </script>
         
         <style>
