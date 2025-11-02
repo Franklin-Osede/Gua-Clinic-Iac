@@ -57,3 +57,4 @@ echo "   [ ] Prueba el flujo completo de creación de cita"
 echo "   [ ] Verifica que no hay errores en la consola (F12)"
 echo ""
 
+

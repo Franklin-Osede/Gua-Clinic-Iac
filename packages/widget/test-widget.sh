@@ -165,3 +165,4 @@ echo "🔍 Para ver logs en la consola del navegador:"
 echo "   Presiona F12 → Console"
 echo ""
 
+

@@ -19,12 +19,12 @@ export class CreateAppointmentDto {
   USU_ID: number;
 
   @ApiProperty({
-    description: 'ID del tipo de cita',
+    description: 'ID del tipo de cita (TCI_ID según DriCloud)',
     example: 789
   })
   @IsNumber()
-  @IsNotEmpty()
-  TIP_ID: number;
+  @IsOptional()
+  TCI_ID?: number;
 
   @ApiProperty({
     description: 'Fecha de la cita (YYYY-MM-DD)',
@@ -52,11 +52,20 @@ export class CreateAppointmentDto {
   OBSERVACIONES?: string;
 
   @ApiProperty({
-    description: 'Tipo de cita (presencial/virtual)',
-    example: 'presencial',
+    description: 'ID del despacho (opcional según DriCloud)',
+    example: 1,
     required: false
   })
-  @IsString()
+  @IsNumber()
   @IsOptional()
-  TIPO_CITA?: string;
+  DES_ID?: number;
+
+  @ApiProperty({
+    description: 'ID de la clínica (opcional según DriCloud)',
+    example: 19748,
+    required: false
+  })
+  @IsNumber()
+  @IsOptional()
+  CLI_ID?: number;
 }

@@ -567,11 +567,26 @@ export class DriCloudService {
   async getDoctorAgenda(doctorId: number, startDate: string, datesToFetch: number = 31) {
     return this.makeDriCloudRequest(async () => {
       const token = await this.getValidToken();
+      
+      // Convertir fecha de formato YYYY-MM-DD a yyyyMMdd según documentación DriCloud
+      let fechaFormatoDriCloud: string;
+      if (startDate.includes('-')) {
+        // Formato: YYYY-MM-DD -> yyyyMMdd
+        fechaFormatoDriCloud = startDate.replace(/-/g, '');
+      } else if (startDate.length === 8) {
+        // Ya está en formato yyyyMMdd
+        fechaFormatoDriCloud = startDate;
+      } else {
+        throw new Error(`Formato de fecha inválido: ${startDate}. Esperado: YYYY-MM-DD o yyyyMMdd`);
+      }
+      
+      this.logger.debug(`📅 Converted date ${startDate} -> ${fechaFormatoDriCloud}`);
+      
       const response = await this.httpService.post(
         `https://apidricloud.dricloud.net/${await this.getClinicUrl()}/api/APIWeb/GetAgendaDisponibilidad`,
         {
           USU_ID: doctorId,
-          fecha: startDate,
+          fecha: fechaFormatoDriCloud,
           diasRecuperar: datesToFetch
         },
         { headers: { USU_APITOKEN: token } }
@@ -608,6 +623,20 @@ export class DriCloudService {
   }
 
   async createAppointment(appointmentData: any) {
+    // 🎭 Modo Mock: No crear citas reales en DriCloud durante pruebas
+    if (this.isMockMode) {
+      this.logger.log('🎭 Modo Mock: Simulando creación de cita (NO se creará en DriCloud real)');
+      
+      // Simular respuesta exitosa sin hacer llamada real
+      return {
+        Successful: true,
+        Data: {
+          CPA_ID: Math.floor(Math.random() * 100000) + 10000, // ID simulado
+        },
+        Html: 'Cita creada exitosamente (Mock Mode - No se registró en CRM)'
+      };
+    }
+    
     return this.makeDriCloudRequest(async () => {
       const token = await this.getValidToken();
       const response = await this.httpService.post(

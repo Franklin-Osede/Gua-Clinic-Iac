@@ -19,6 +19,8 @@ async function bootstrap() {
   if (isProduction) {
     // En producción, solo orígenes específicos
     allowedOrigins = [
+      'https://urologiayandrologia.com',
+      'https://www.urologiayandrologia.com',
       'https://www.guaclinic.com',
       'https://guaclinic.com',
       'https://cdn.gua.com',
