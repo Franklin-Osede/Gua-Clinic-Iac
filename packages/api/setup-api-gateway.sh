@@ -224,3 +224,5 @@ echo ""
 echo "💡 Para verificar, prueba:"
 echo "   curl $API_URL/health"
 echo ""
+
+

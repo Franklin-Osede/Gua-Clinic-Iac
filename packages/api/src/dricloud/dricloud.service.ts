@@ -24,6 +24,7 @@ export class DriCloudService {
   private credentials: DriCloudCredentials | null = null;
   private readonly isMockMode: boolean;
   private readonly mockBaseUrl: string;
+  private readonly HTTP_TIMEOUT_MS = 10000; // 10 segundos timeout para evitar bloqueos
 
   constructor(
     private httpService: HttpService,
@@ -68,7 +69,8 @@ export class DriCloudService {
         
         const response = await this.httpService.post(
           `https://apidricloud.dricloud.net/${await this.getClinicUrl()}/api/APIWeb/LoginExternalHash`,
-          await this.getLoginParams()
+          await this.getLoginParams(),
+          { timeout: this.HTTP_TIMEOUT_MS }
         ).toPromise();
 
         if (response.data.Successful) {
@@ -455,13 +457,18 @@ export class DriCloudService {
       }
 
       // Usar método resiliente con Circuit Breaker
+      // No enviamos CLI_ID para obtener TODAS las especialidades configuradas
+      // Si se envía CLI_ID, DriCloud solo devuelve especialidades con turnos abiertos futuros
       const result = await this.resilientDriCloudRequest(
         async () => {
           const token = await this.getValidToken();
           const response = await this.httpService.post(
             `https://apidricloud.dricloud.net/${await this.getClinicUrl()}/api/APIWeb/GetEspecialidades`,
-            { CLI_ID: this.credentials?.DRICLOUD_CLINIC_ID },
-            { headers: { USU_APITOKEN: token } }
+            {}, // No enviar CLI_ID para obtener todas las especialidades
+            { 
+              headers: { USU_APITOKEN: token },
+              timeout: this.HTTP_TIMEOUT_MS
+            }
           ).toPromise();
           
           return response.data;
@@ -487,7 +494,10 @@ export class DriCloudService {
       const response = await this.httpService.post(
         `https://apidricloud.dricloud.net/${await this.getClinicUrl()}/api/APIWeb/GetDoctores`,
         { ESP_ID: espId },
-        { headers: { USU_APITOKEN: token } }
+        { 
+          headers: { USU_APITOKEN: token },
+          timeout: this.HTTP_TIMEOUT_MS
+        }
       ).toPromise();
       
       return response.data;
@@ -517,12 +527,17 @@ export class DriCloudService {
         }
       } else {
         // Si no hay caché, hacer la petición directa
+        // No enviamos CLI_ID para obtener TODAS las especialidades configuradas
+        // Si se envía CLI_ID, DriCloud solo devuelve especialidades con turnos abiertos futuros
         const response = await this.makeDriCloudRequest(async () => {
           const token = await this.getValidToken();
           const response = await this.httpService.post(
             `https://apidricloud.dricloud.net/${await this.getClinicUrl()}/api/APIWeb/GetEspecialidades`,
-            { CLI_ID: this.credentials?.DRICLOUD_CLINIC_ID },
-            { headers: { USU_APITOKEN: token } }
+            {}, // No enviar CLI_ID para obtener todas las especialidades
+            { 
+              headers: { USU_APITOKEN: token },
+              timeout: this.HTTP_TIMEOUT_MS
+            }
           ).toPromise();
           return response.data;
         });
@@ -589,7 +604,10 @@ export class DriCloudService {
           fecha: fechaFormatoDriCloud,
           diasRecuperar: datesToFetch
         },
-        { headers: { USU_APITOKEN: token } }
+        { 
+          headers: { USU_APITOKEN: token },
+          timeout: this.HTTP_TIMEOUT_MS
+        }
       ).toPromise();
       
       return response.data;
@@ -602,7 +620,10 @@ export class DriCloudService {
       const response = await this.httpService.post(
         `https://apidricloud.dricloud.net/${await this.getClinicUrl()}/api/APIWeb/GetPacienteByNIF`,
         { id: nif },
-        { headers: { USU_APITOKEN: token } }
+        { 
+          headers: { USU_APITOKEN: token },
+          timeout: this.HTTP_TIMEOUT_MS
+        }
       ).toPromise();
       
       return response.data;
@@ -615,7 +636,10 @@ export class DriCloudService {
       const response = await this.httpService.post(
         `https://apidricloud.dricloud.net/${await this.getClinicUrl()}/api/APIWeb/PostCreatePaciente`,
         { paciente: patientData },
-        { headers: { USU_APITOKEN: token } }
+        { 
+          headers: { USU_APITOKEN: token },
+          timeout: this.HTTP_TIMEOUT_MS
+        }
       ).toPromise();
       
       return response.data;
@@ -642,7 +666,10 @@ export class DriCloudService {
       const response = await this.httpService.post(
         `https://apidricloud.dricloud.net/${await this.getClinicUrl()}/api/APIWeb/PostCitaPaciente`,
         appointmentData,
-        { headers: { USU_APITOKEN: token } }
+        { 
+          headers: { USU_APITOKEN: token },
+          timeout: this.HTTP_TIMEOUT_MS
+        }
       ).toPromise();
       
       return response.data;

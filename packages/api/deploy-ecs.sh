@@ -312,20 +312,6 @@ while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
         --output text 2>/dev/null)
       
       if [ ! -z "$PUBLIC_IP" ] && [ "$PUBLIC_IP" != "None" ]; then
-        # ============================================
-        # 10. ACTUALIZAR API GATEWAY AUTOMÁTICAMENTE
-        # ============================================
-        echo ""
-        echo "🔟 Actualizando API Gateway con la nueva IP..."
-        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-        if [ -f "$SCRIPT_DIR/update-api-gateway-ip.sh" ]; then
-          "$SCRIPT_DIR/update-api-gateway-ip.sh" > /dev/null 2>&1
-          echo "   ✅ API Gateway actualizado automáticamente"
-        else
-          echo "   ⚠️  Script de actualización no encontrado, ejecuta manualmente:"
-          echo "      ./update-api-gateway-ip.sh"
-        fi
-        
         echo ""
         echo "═══════════════════════════════════════"
         echo "✅ DESPLIEGUE COMPLETADO"
@@ -334,18 +320,17 @@ while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
         echo "🌐 Tu API está disponible en:"
         echo "   http://$PUBLIC_IP:3000"
         echo ""
-        echo "🌐 API Gateway (HTTPS):"
-        echo "   https://4mbksaqi36.execute-api.eu-north-1.amazonaws.com/prod"
-        echo ""
         echo "📋 Endpoints disponibles:"
-        echo "   - https://4mbksaqi36.execute-api.eu-north-1.amazonaws.com/prod/bootstrap"
-        echo "   - https://4mbksaqi36.execute-api.eu-north-1.amazonaws.com/prod/medical-specialties"
-        echo "   - https://4mbksaqi36.execute-api.eu-north-1.amazonaws.com/prod/api/docs"
+        echo "   - http://$PUBLIC_IP:3000/bootstrap"
+        echo "   - http://$PUBLIC_IP:3000/medical-specialties"
+        echo "   - http://$PUBLIC_IP:3000/api/docs (Swagger)"
         echo ""
-        echo "💡 El API Gateway se actualizó automáticamente con la nueva IP"
-        echo "   Si la IP cambia en el futuro, ejecuta: ./update-api-gateway-ip.sh"
+        echo "⚠️  IMPORTANTE:"
+        echo "   - La IP puede cambiar si reinicias el servicio"
+        echo "   - Para producción, considera usar un Load Balancer + dominio"
+        echo "   - Actualiza la URL en WordPress: api_url=\"http://$PUBLIC_IP:3000\""
         echo ""
-        echo "💰 Costo estimado: ~$18/mes (sin Load Balancer)"
+        echo "💰 Costo estimado: ~$18/mes"
         echo ""
         exit 0
       fi

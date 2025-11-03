@@ -54,7 +54,7 @@ class GuaClinicWidget {
         $atts = shortcode_atts(array(
             'locale' => 'es',
             'theme' => 'light',
-            'api_url' => 'https://4mbksaqi36.execute-api.eu-north-1.amazonaws.com/prod' // API Gateway HTTPS
+            'api_url' => 'https://ybymfv93yg.execute-api.eu-north-1.amazonaws.com/prod' // API Gateway HTTP API v2
         ), $atts);
         
         // Generar ID único para el contenedor

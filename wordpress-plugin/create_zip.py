@@ -30,3 +30,5 @@ zip_size = zip_path.stat().st_size / (1024 * 1024)  # MB
 print(f"\n✅ ZIP creado exitosamente")
 print(f"   Ubicación: {zip_path}")
 print(f"   Tamaño: {zip_size:.2f} MB")
+
+

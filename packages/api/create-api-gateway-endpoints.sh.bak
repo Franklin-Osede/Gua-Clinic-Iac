@@ -4,7 +4,7 @@
 export PATH="/opt/homebrew/bin:$PATH"
 AWS="aws"
 REGION="eu-north-1"
-BACKEND_URL="http://16.171.35.107:3000"
+BACKEND_URL="http://gua-clinic-api-alb-766718797.eu-north-1.elb.amazonaws.com"
 API_ID="4mbksaqi36"
 ROOT_ID="z70fwj0bxk"
 STAGE_NAME="prod"
