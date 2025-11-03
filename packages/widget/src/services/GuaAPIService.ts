@@ -109,9 +109,11 @@ export const getDoctors = async (serviceId: number) => {
 
   try {
     const response = await apiClient.get(`/doctors/${serviceId}`);
-    // DriCloud devuelve { Successful: true, Data: [...] }
-    // Necesitamos extraer el array de doctores
-    return response.data.Data || [];
+    // El backend ahora devuelve directamente un array [{ doctor_id, name, surname, ... }]
+    // Mantenemos compatibilidad con el formato antiguo por si acaso
+    return Array.isArray(response.data) 
+      ? response.data 
+      : (response.data.Data || response.data.Doctores || []);
   } catch (error) {
     console.error("Error fetching doctors data:", error);
     throw error;
