@@ -81,18 +81,30 @@ export class MedicalSpecialtiesService {
       ...esp
     }));
     
-    this.logger.debug(`Transformed ${transformedSpecialties.length} specialties`);
+    // ⚠️ FILTRAR: Eliminar especialidades que no se pueden reservar directamente
+    // Oncología: servicios derivados, no se reservan directamente
+    const filteredSpecialties = transformedSpecialties.filter((esp: any) => {
+      const name = (esp.name || esp.ESP_NOMBRE || '').toLowerCase();
+      // Filtrar "Oncología" y variaciones
+      if (name.includes('oncología') || name.includes('oncologia')) {
+        this.logger.debug(`Filtered out specialty (not bookable directly): ${esp.name}`);
+        return false;
+      }
+      return true;
+    });
     
-    // Guardar en caché (guardar el array transformado)
+    this.logger.debug(`Transformed ${transformedSpecialties.length} specialties, filtered to ${filteredSpecialties.length} bookable specialties`);
+    
+    // Guardar en caché (guardar el array filtrado)
     await this.dynamoDBService.setCache(
       this.CACHE_KEY,
-      transformedSpecialties,
+      filteredSpecialties,
       this.CACHE_TTL_MINUTES
     );
 
     this.logger.debug(`Medical specialties cached for ${this.CACHE_TTL_MINUTES} minutes`);
     
-    return transformedSpecialties;
+    return filteredSpecialties;
     } catch (error) {
       this.logger.error(`Error fetching medical specialties: ${error.message}`, error.stack);
       return [];

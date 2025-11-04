@@ -1,12 +1,21 @@
 #!/bin/bash
 cd "$(dirname "$0")"
-zip -r ~/Desktop/gua-clinic-widget-FINAL-v1.0.1.zip gua-clinic-widget.php gua-widget.iife.js readme.txt
+VERSION="v1.0.2"
+ZIP_FILE=~/Desktop/gua-clinic-widget-FINAL-${VERSION}.zip
+
+echo "📦 Creando ZIP del plugin WordPress..."
+echo "   Versión: ${VERSION}"
 echo ""
-echo "✅ ZIP creado exitosamente en ~/Desktop/gua-clinic-widget-FINAL-v1.0.1.zip"
+
+# Incluir todos los archivos necesarios (CSS incluido ahora)
+zip -r "$ZIP_FILE" gua-clinic-widget.php gua-widget.iife.js style.css readme.txt
+
 echo ""
-ls -lh ~/Desktop/gua-clinic-widget-FINAL-v1.0.1.zip
+echo "✅ ZIP creado exitosamente en $ZIP_FILE"
+echo ""
+ls -lh "$ZIP_FILE"
 echo ""
 echo "📋 Contenido del ZIP:"
-unzip -l ~/Desktop/gua-clinic-widget-FINAL-v1.0.1.zip
+unzip -l "$ZIP_FILE"
 
 

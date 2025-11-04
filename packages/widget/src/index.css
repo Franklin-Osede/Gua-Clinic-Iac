@@ -6,6 +6,53 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
+/* ⚠️ FORZAR: Todos los estilos de Tailwind dentro del widget */
+#gua-widget-container *,
+gua-widget * {
+  box-sizing: border-box !important;
+}
+
+/* ⚠️ FORZAR: Grid y layout classes para WordPress */
+#gua-widget-container .grid,
+gua-widget .grid {
+  display: grid !important;
+}
+
+#gua-widget-container .flex,
+gua-widget .flex {
+  display: flex !important;
+}
+
+#gua-widget-container .grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+#gua-widget-container .gap-4 {
+  gap: 1rem !important;
+}
+
+#gua-widget-container .gap-6 {
+  gap: 1.5rem !important;
+}
+
+@media (min-width: 768px) {
+  #gua-widget-container[class*="md:grid-cols-3"],
+  gua-widget[class*="md:grid-cols-3"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (min-width: 1536px) {
+  #gua-widget-container[class*="2xl:grid-cols-3"],
+  gua-widget[class*="2xl:grid-cols-3"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+  #gua-widget-container[class*="2xl:gap-6"],
+  gua-widget[class*="2xl:gap-6"] {
+    gap: 1.5rem !important;
+  }
+}
+
 @font-face {
   font-family: "Work Sans";
   src: url("../fonts/WorkSans-Regular.ttf") format("opentype");
@@ -46,93 +93,114 @@
   font-display: swap;
 }
 
-body {
-  font-family: "Work Sans", sans-serif;
-  color: #242424;
+/* ⚠️ SCOPE: Todos los estilos scoped al widget para evitar conflictos con WordPress */
+#gua-widget-container,
+gua-widget {
+  font-family: "Work Sans", sans-serif !important;
+  color: #242424 !important;
+  box-sizing: border-box !important;
 }
 
-h1 {
-  font-size: 18px;
+#gua-widget-container h1,
+gua-widget h1 {
+  font-size: 18px !important;
 }
 
-h2 {
-  font-size: 16px;
+#gua-widget-container h2,
+gua-widget h2 {
+  font-size: 16px !important;
 }
 
-h3 {
-  font-size: 12px;
+#gua-widget-container h3,
+gua-widget h3 {
+  font-size: 12px !important;
 }
 
-p {
+#gua-widget-container p,
+gua-widget p {
   font-size: 10px !important;
 }
 
-ul {
+#gua-widget-container ul,
+gua-widget ul {
   font-size: 10px !important;
 }
 
 @media (min-width: 768px) {
-  h1 {
-    font-size: 2.5vw;
+  #gua-widget-container h1,
+  gua-widget h1 {
+    font-size: 2.5vw !important;
   }
 
-  h2 {
-    font-size: 2vw;
+  #gua-widget-container h2,
+  gua-widget h2 {
+    font-size: 2vw !important;
   }
 
-  h3 {
-    font-size: 1.5vw;
+  #gua-widget-container h3,
+  gua-widget h3 {
+    font-size: 1.5vw !important;
   }
 
-  p {
-    font-size: 1.25vw;
+  #gua-widget-container p,
+  gua-widget p {
+    font-size: 1.25vw !important;
   }
 
-  ul {
-    font-size: 1vw;
+  #gua-widget-container ul,
+  gua-widget ul {
+    font-size: 1vw !important;
   }
 }
 
 @media (min-width: 1024px) {
-  h1 {
-    font-size: 1.5vw;
+  #gua-widget-container h1,
+  gua-widget h1 {
+    font-size: 1.5vw !important;
   }
 
-  h2 {
-    font-size: 1vw;
+  #gua-widget-container h2,
+  gua-widget h2 {
+    font-size: 1vw !important;
   }
 
-  h3 {
-    font-size: 0.85vw;
+  #gua-widget-container h3,
+  gua-widget h3 {
+    font-size: 0.85vw !important;
   }
 
-  p {
+  #gua-widget-container p,
+  gua-widget p {
     font-size: 0.75vw !important;
   }
 
-  ul {
+  #gua-widget-container ul,
+  gua-widget ul {
     font-size: 0.75vw !important;
   }
 }
 
-.react-calendar {
-  width: 100%;
-  max-width: 325px;
-  background: #efefef;
-  border-radius: 24px;
-  font-family: "Work Sans", serif;
-  padding: 1.5rem;
+#gua-widget-container .react-calendar,
+gua-widget .react-calendar {
+  width: 100% !important;
+  max-width: 325px !important;
+  background: #efefef !important;
+  border-radius: 24px !important;
+  font-family: "Work Sans", serif !important;
+  padding: 1.5rem !important;
 }
 
 @media (min-width: 1536px) {
-  .react-calendar {
-    max-width: 325px;
+  #gua-widget-container .react-calendar,
+  gua-widget .react-calendar {
+    max-width: 325px !important;
   }
 }
 
 @media (max-width: 450px) {
-  .react-calendar {
-    max-width: 325px;
+  #gua-widget-container .react-calendar,
+  gua-widget .react-calendar {
+    max-width: 325px !important;
     padding: 1rem;
     border-radius: 16px;
     font-size: 12px;

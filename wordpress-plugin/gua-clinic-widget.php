@@ -2,7 +2,7 @@
 /**
  * Plugin Name: GUA Clinic Widget
  * Description: Widget para sistema de citas médicas GUA Clinic
- * Version: 1.0.1
+ * Version: 1.0.6
  * Author: GUA Clinic
  */
 
@@ -27,7 +27,23 @@ class GuaClinicWidget {
     public function enqueue_scripts() {
         // Solo cargar en páginas que usen el shortcode
         if (is_singular() && has_shortcode(get_post()->post_content, 'gua_clinic_widget')) {
-            // Cargar desde el directorio del plugin (más confiable)
+            // Cargar CSS PRIMERO (crítico para que Tailwind y estilos funcionen)
+            $css_url = plugins_url('style.css', __FILE__);
+            $css_path = plugin_dir_path(__FILE__) . 'style.css';
+            if (file_exists($css_path)) {
+                    $css_version = '1.0.6-' . filemtime($css_path);
+                // ⚠️ IMPORTANTE: Cargar CSS con prioridad alta y sin dependencias
+                // Usar wp_enqueue_style con prioridad 1 para que se cargue primero
+                wp_enqueue_style(
+                    'gua-widget-css',
+                    $css_url,
+                    array(), // Sin dependencias para evitar conflictos
+                    $css_version,
+                    'all'
+                );
+            }
+            
+            // Cargar JavaScript
             $widget_url = plugins_url('gua-widget.iife.js', __FILE__);
             
             // Si no existe localmente, usar CDN como fallback
@@ -37,7 +53,7 @@ class GuaClinicWidget {
             }
             
             // Agregar timestamp para evitar caché del navegador
-            $version = '1.0.1-' . filemtime($widget_path ?: __FILE__);
+                $version = '1.0.6-' . filemtime($widget_path ?: __FILE__);
             
             wp_enqueue_script(
                 'gua-widget',

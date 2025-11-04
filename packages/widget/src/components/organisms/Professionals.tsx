@@ -63,11 +63,62 @@ const Professionals: React.FC<ProfessionalsProps> = ({
             doctor_id: number;
             name: string;
             surname: string;
-          }): DoctorInfo => ({
-            photo: doctorPhotos[doctor.doctor_id],
-            name: `Dr ${doctor.name} ${doctor.surname}`,
-            id: doctor.doctor_id,
-          }),
+            FotoPerfil?: string;
+          }): DoctorInfo => {
+            // Determinar la foto a mostrar
+            let photo: JSX.Element;
+            
+            // 1. Primero intentar usar FotoPerfil de DriCloud si está disponible
+            if (doctor.FotoPerfil && doctor.FotoPerfil.trim() !== '') {
+              photo = (
+                <img 
+                  src={doctor.FotoPerfil} 
+                  alt={`${doctor.name} ${doctor.surname}`}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Si falla la carga, usar fallback
+                    const fallbackPhoto = doctorPhotos[doctor.doctor_id];
+                    if (fallbackPhoto) {
+                      e.currentTarget.style.display = 'none';
+                      // Renderizar fallback si existe
+                    } else {
+                      // Mostrar placeholder si no hay foto
+                      e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2U1ZTdlYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Y2EzYWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5EUjwvdGV4dD48L3N2Zz4=';
+                    }
+                  }}
+                />
+              );
+            } 
+            // 2. Si no hay FotoPerfil, usar el Record hardcodeado
+            else if (doctorPhotos[doctor.doctor_id]) {
+              photo = doctorPhotos[doctor.doctor_id];
+            } 
+            // 3. Si no hay nada, mostrar placeholder
+            else {
+              photo = (
+                <div className="w-full h-full flex items-center justify-center bg-gray-200 rounded-full">
+                  <span className="text-gray-500 text-xs font-semibold">DR</span>
+                </div>
+              );
+            }
+            
+            // Construir nombre completo, limpiando espacios
+            const firstName = (doctor.name || '').trim();
+            const lastName = (doctor.surname || '').trim();
+            const fullName = firstName && lastName 
+              ? `Dr ${firstName} ${lastName}` 
+              : firstName 
+                ? `Dr ${firstName}` 
+                : lastName 
+                  ? `Dr ${lastName}` 
+                  : 'Dr';
+            
+            return {
+              photo,
+              name: fullName,
+              id: doctor.doctor_id,
+            };
+          },
         );
         setProfessionalOptions(doctors);
       } catch (error) {
@@ -95,6 +146,16 @@ const Professionals: React.FC<ProfessionalsProps> = ({
                 : "grid 2xl:grid-cols-3 md:grid-cols-3 grid-cols-2"
             }
            2xl:gap-6 md:gap-6 gap-4`}
+          style={{
+            display: professionalOptions.length < 3 ? 'flex' : 'grid',
+            gridTemplateColumns: professionalOptions.length >= 3 ? 'repeat(2, minmax(0, 1fr))' : undefined,
+            gap: '16px',
+            width: '100%',
+            maxWidth: '100%',
+            boxSizing: 'border-box',
+            alignItems: professionalOptions.length < 3 ? 'center' : undefined,
+            justifyContent: professionalOptions.length < 3 ? 'center' : undefined,
+          }}
         >
           {loading ? (
             <div className="flex justify-center items-center col-span-2 mt-8">

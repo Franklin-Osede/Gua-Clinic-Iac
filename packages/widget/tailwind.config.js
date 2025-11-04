@@ -1,5 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  // ⚠️ IMPORTANTE: Scope para evitar conflictos con WordPress
+  important: '#gua-widget-container',
   content: ["./src/**/*.{js,jsx,ts,tsx}", "./public/index.html"],
   theme: {
     extend: {

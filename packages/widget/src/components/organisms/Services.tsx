@@ -51,7 +51,17 @@ const Services: React.FC<ServicePageProps> = ({
           <h1 className="text-center">Selecciona la Especialidad</h1>
         </div>
         <div className="flex flex-col items-center my-8">
-          <div className="grid 2xl:grid-cols-3 md:grid-cols-3 grid-cols-2 2xl:gap-6 md:gap-6 gap-4">
+          <div 
+            className="grid 2xl:grid-cols-3 md:grid-cols-3 grid-cols-2 2xl:gap-6 md:gap-6 gap-4"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+              gap: '16px',
+              width: '100%',
+              maxWidth: '100%',
+              boxSizing: 'border-box',
+            }}
+          >
             {loading ? (
               <div className="flex justify-center items-center col-span-2 mt-8">
                 <PuffLoader size={30} color={"#9CA3AF"} loading={loading} />

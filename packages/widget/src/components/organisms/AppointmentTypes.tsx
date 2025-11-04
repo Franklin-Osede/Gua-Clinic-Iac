@@ -100,7 +100,17 @@ const AppointmentTypes: React.FC<AppointmentTypesProps> = ({
       )}
       {!isLoading && (
         <div>
-          <div className="flex flex-col 2xl:gap-6 md:gap-6 gap-4 items-center justify-center">
+          <div 
+            className="flex flex-col 2xl:gap-6 md:gap-6 gap-4 items-center justify-center"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+            }}
+          >
             {finalOptions.map((appt, index) => (
               <AppointmentCardOption
                 id={index}

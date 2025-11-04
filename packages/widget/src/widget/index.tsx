@@ -1,5 +1,6 @@
 import ReactDOM from 'react-dom/client'
 import App from '../App'
+import '../index.css' // ⚠️ CRÍTICO: Importar CSS para que Tailwind y estilos funcionen en WordPress
 
 // Props del widget
 export interface GuaWidgetProps {

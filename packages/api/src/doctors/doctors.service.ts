@@ -78,6 +78,8 @@ export class DoctorsService {
         doctor_id: doctor.USU_ID || doctor.doctor_id || doctor.id,
         name: doctor.USU_NOMBRE || doctor.name || '',
         surname: doctor.USU_APELLIDOS || doctor.surname || doctor.apellidos || '',
+        // FotoPerfil puede venir de DriCloud (base64 o vacío)
+        FotoPerfil: doctor.FotoPerfil || doctor.fotoPerfil || '',
         // Mantener datos originales por si se necesitan
         ...doctor
       }));
