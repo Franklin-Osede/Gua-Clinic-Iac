@@ -8,17 +8,18 @@ interface SpecialtyLogoProps {
 // Fallback: usar componentes existentes si no hay SVG
 import UrologyLogo from "./UrologyLogo";
 
-// Mapeo de especialidades a archivos SVG (se cargarán desde public en build)
+// Mapeo de especialidades a archivos SVG (se cargarán desde CDN como los otros logos)
+const CDN_BASE_URL = 'https://cdn.gua.com';
 const SVG_MAP: Record<string, string> = {
-  'urologia': '/logos/UROLOGÍA.svg',
-  'andrologia': '/logos/Andrología.svg',
-  'medicinasexual': '/logos/Andrología.svg',
-  'ginecologia': '/logos/ginecología.svg',
-  'fisioterapia': '/logos/Fisioterapia.svg',
-  'medicinafisica': '/logos/rehabilitadora.svg',
-  'rehabilitacion': '/logos/rehabilitadora.svg',
-  'psicologia': '/logos/psicología.svg',
-  'medicinaintegrativa': '/logos/integrativa.svg',
+  'urologia': `${CDN_BASE_URL}/logos/UROLOGÍA.svg`,
+  'andrologia': `${CDN_BASE_URL}/logos/Andrología.svg`,
+  'medicinasexual': `${CDN_BASE_URL}/logos/Andrología.svg`,
+  'ginecologia': `${CDN_BASE_URL}/logos/ginecología.svg`,
+  'fisioterapia': `${CDN_BASE_URL}/logos/Fisioterapia.svg`,
+  'medicinafisica': `${CDN_BASE_URL}/logos/Medicina Física y rehabilitadora.svg`,
+  'rehabilitacion': `${CDN_BASE_URL}/logos/Medicina Física y rehabilitadora.svg`,
+  'psicologia': `${CDN_BASE_URL}/logos/psicología.svg`,
+  'medicinaintegrativa': `${CDN_BASE_URL}/logos/medicina integrativa.svg`,
 };
 
 export const SpecialtyLogo: FC<SpecialtyLogoProps> = ({ specialtyName, disabled }) => {
