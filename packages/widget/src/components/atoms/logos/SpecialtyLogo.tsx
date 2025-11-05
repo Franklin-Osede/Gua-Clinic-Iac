@@ -1,53 +1,142 @@
-import { FC } from "react";
+import { FC, useState } from "react";
 
 interface SpecialtyLogoProps {
   specialtyName: string;
   disabled: boolean;
 }
 
-// Fallback: usar componentes existentes si no hay SVG
+// Importar logos React como fallback
 import UrologyLogo from "./UrologyLogo";
+import GynecologyLogo from "./GynecologyLogo";
+import AndrologyLogo from "./AndrologyLogo";
+import PhysicalTherapyLogo from "./PhysicalTherapyLogo";
+import PsychologyLogo from "./PsychologyLogo";
+import LaboratoryLogo from "./LaboratoryLogo";
+import DiagnosticTestsLogo from "./DiagnosticTestsLogo";
+import IntegrativeMedicineLogo from "./IntegrativeMedicineLogo";
 
-// Mapeo de especialidades a archivos SVG
-// En desarrollo: usar fallback URO (CDN no disponible), en producción: usar CDN
-const isDevelopment = import.meta.env.DEV;
+// Función auxiliar para normalizar nombres (quitar tildes, espacios, números)
+const normalizeSpecialtyName = (name: string): string => {
+  return name
+    .toLowerCase()
+    .replace(/^\d+\.?\s*/g, '') // Remover prefijos numéricos
+    .normalize('NFD') // Descomponer caracteres con tildes
+    .replace(/[\u0300-\u036f]/g, '') // Quitar tildes y diacríticos
+    .replace(/[^a-z]/g, '') // Solo letras minúsculas
+    .trim();
+};
+
+// Mapeo de especialidades a logos en el CDN
 const CDN_BASE_URL = 'https://cdn.gua.com';
 
-const SVG_MAP: Record<string, string | null> = {
-  'urologia': isDevelopment ? null : `${CDN_BASE_URL}/logos/UROLOGÍA.svg`,
-  'andrologia': isDevelopment ? null : `${CDN_BASE_URL}/logos/Andrología.svg`,
-  'medicinasexual': isDevelopment ? null : `${CDN_BASE_URL}/logos/Andrología.svg`,
-  'ginecologia': isDevelopment ? null : `${CDN_BASE_URL}/logos/ginecología.svg`,
-  'fisioterapia': isDevelopment ? null : `${CDN_BASE_URL}/logos/Fisioterapia.svg`,
-  'medicinafisica': isDevelopment ? null : `${CDN_BASE_URL}/logos/Medicina Física y rehabilitadora.svg`,
-  'rehabilitacion': isDevelopment ? null : `${CDN_BASE_URL}/logos/Medicina Física y rehabilitadora.svg`,
-  'psicologia': isDevelopment ? null : `${CDN_BASE_URL}/logos/psicología.svg`,
-  'medicinaintegrativa': isDevelopment ? null : `${CDN_BASE_URL}/logos/medicina integrativa.svg`,
+const SVG_MAP: Record<string, { cdn: string; fallback: FC<{ disabled: boolean }> }> = {
+  'urologia': { 
+    cdn: `${CDN_BASE_URL}/logos/UROLOGÍA.svg`, 
+    fallback: UrologyLogo 
+  },
+  'andrologia': { 
+    cdn: `${CDN_BASE_URL}/logos/Andrología.svg`, 
+    fallback: AndrologyLogo 
+  },
+  'medicinasexual': { 
+    cdn: `${CDN_BASE_URL}/logos/Andrología.svg`, 
+    fallback: AndrologyLogo 
+  },
+  'ginecologia': { 
+    cdn: `${CDN_BASE_URL}/logos/ginecología.svg`, 
+    fallback: GynecologyLogo 
+  },
+  'fisioterapia': { 
+    // IMPORTANTE: "Fisioterapia" en la UI es realmente "Psicología" en la API
+    // Usar logo de psicología porque Fisioterapia se muestra en lugar de Psicología
+    cdn: `${CDN_BASE_URL}/logos/psicología.svg`, 
+    fallback: PsychologyLogo 
+  },
+  'psicologia': { 
+    cdn: `${CDN_BASE_URL}/logos/psicología.svg`, 
+    fallback: PsychologyLogo 
+  },
+  'medicinafisica': { 
+    cdn: `${CDN_BASE_URL}/logos/Medicina Física y rehabilitadora.svg`, 
+    fallback: PhysicalTherapyLogo 
+  },
+  'rehabilitacion': { 
+    cdn: `${CDN_BASE_URL}/logos/Medicina Física y rehabilitadora.svg`, 
+    fallback: PhysicalTherapyLogo 
+  },
+  'medicinaintegrativa': { 
+    cdn: `${CDN_BASE_URL}/logos/medicina integrativa.svg`, 
+    fallback: IntegrativeMedicineLogo 
+  },
+  'laboratorio': { 
+    cdn: `${CDN_BASE_URL}/logos/laboratorio.svg`, 
+    fallback: LaboratoryLogo 
+  },
+  'pruebasdiagnosticas': { 
+    cdn: `${CDN_BASE_URL}/logos/pruebas diagnosticas.svg`, 
+    fallback: DiagnosticTestsLogo 
+  },
 };
 
 export const SpecialtyLogo: FC<SpecialtyLogoProps> = ({ specialtyName, disabled }) => {
-  // Normalizar el nombre para matching (sin espacios, minúsculas, sin números)
-  const normalizedName = (specialtyName || '')
-    .toLowerCase()
-    .replace(/^\d+\.?\s*/g, '') // Remover prefijos numéricos como "01. " o "29."
-    .replace(/[^a-záéíóúñü]/g, '') // Remover caracteres especiales
-    .trim();
+  const [imageError, setImageError] = useState(false);
   
-  // Buscar SVG correspondiente
-  let svgPath: string | null = null;
-  for (const [key, path] of Object.entries(SVG_MAP)) {
-    if (normalizedName.includes(key)) {
-      svgPath = path;
-      break;
+  // Normalizar el nombre usando la función auxiliar
+  const normalizedName = normalizeSpecialtyName(specialtyName || '');
+  
+  console.log(`🎨 SpecialtyLogo: "${specialtyName}" → normalizado: "${normalizedName}"`);
+  
+  // Buscar logo correspondiente
+  // Ordenar claves de más específicas a menos específicas para evitar matches incorrectos
+  const sortedKeys = Object.keys(SVG_MAP).sort((a, b) => b.length - a.length); // Más largas primero
+  
+  let logoInfo: { cdn: string; fallback: FC<{ disabled: boolean }> } | null = null;
+  let matchedKey: string | null = null;
+  
+  for (const key of sortedKeys) {
+    const info = SVG_MAP[key];
+    // Normalizar también la clave para comparación
+    const normalizedKey = normalizeSpecialtyName(key);
+    
+    // Verificar si el nombre normalizado contiene la clave normalizada COMPLETA
+    // Esto evita que "medicina" coincida con "medicinasexual" cuando buscamos "medicinaintegrativa"
+    if (normalizedName.includes(normalizedKey)) {
+      // Verificar que no hay una clave más específica que también coincida
+      // Ejemplo: "medicinaintegrativa" contiene "medicina" pero debería usar "medicinaintegrativa"
+      const isMoreSpecific = sortedKeys.some(otherKey => {
+        if (otherKey === key) return false;
+        const otherNormalized = normalizeSpecialtyName(otherKey);
+        return normalizedName.includes(otherNormalized) && otherNormalized.length > normalizedKey.length;
+      });
+      
+      if (!isMoreSpecific) {
+        logoInfo = info;
+        matchedKey = key;
+        console.log(`✅ Logo encontrado: "${specialtyName}" → clave: "${key}" (normalizado: "${normalizedName}" contiene "${normalizedKey}")`);
+        break;
+      }
     }
   }
   
-  // En desarrollo, usar fallback directamente (CDN no disponible)
-  // En producción, intentar cargar desde CDN
-  if (isDevelopment || !svgPath) {
+  // Si no encontramos match directo, intentar búsqueda más flexible para casos especiales
+  if (!logoInfo) {
+    // Para "Medicina Física y Rehabilitación" que se normaliza a "medicinafisicarehabilitacion"
+    if (normalizedName.includes('medicina') && (normalizedName.includes('fisica') || normalizedName.includes('rehabilitacion'))) {
+      logoInfo = SVG_MAP['medicinafisica'] || SVG_MAP['rehabilitacion'];
+      if (logoInfo) {
+        matchedKey = normalizedName.includes('fisica') ? 'medicinafisica' : 'rehabilitacion';
+        console.log(`✅ Logo encontrado (búsqueda flexible): "${specialtyName}" → clave: "${matchedKey}"`);
+      }
+    }
+  }
+  
+  // Si no encontramos logo, usar fallback URO
+  if (!logoInfo) {
+    console.warn(`⚠️ No se encontró logo para "${specialtyName}" (normalizado: "${normalizedName}"), usando fallback URO`);
     return <UrologyLogo disabled={disabled} />;
   }
   
+  const FallbackComponent = logoInfo.fallback;
   const logoStyle: React.CSSProperties = {
     width: '40px',
     height: '40px',
@@ -55,17 +144,37 @@ export const SpecialtyLogo: FC<SpecialtyLogoProps> = ({ specialtyName, disabled 
     objectFit: 'contain',
   };
   
-  // Intentar cargar desde CDN
+  // En desarrollo, usar directamente los componentes React (más rápido y confiable)
+  // En producción, intentar cargar desde CDN primero, y si falla usar componente React
+  const isDevelopment = import.meta.env.DEV;
+  
+  // En desarrollo, usar siempre componente React directamente
+  if (isDevelopment) {
+    console.log(`🎨 Desarrollo: usando componente React para "${specialtyName}"`);
+    return <FallbackComponent disabled={disabled} />;
+  }
+  
+  // En producción: intentar cargar desde CDN, si falla usar componente React
+  if (imageError) {
+    console.log(`🎨 Producción: usando componente React para "${specialtyName}" (CDN falló)`);
+    return <FallbackComponent disabled={disabled} />;
+  }
+  
+  // Intentar cargar desde CDN (solo en producción)
   return (
     <img 
-      src={svgPath} 
+      src={logoInfo.cdn} 
       alt={specialtyName} 
       style={logoStyle}
-      onError={(e) => {
-        // Si falla cargar el SVG, usar fallback
-        console.warn(`Failed to load logo for ${specialtyName} from CDN, using fallback`);
-        // Esto debería ser manejado por el componente padre, pero por ahora usamos fallback
-        e.currentTarget.style.display = 'none';
+      onError={() => {
+        // Si falla cargar desde CDN, usar componente React como fallback
+        console.warn(`⚠️ No se pudo cargar logo desde CDN para "${specialtyName}", usando fallback`);
+        setImageError(true);
+      }}
+      onLoad={() => {
+        // Si carga correctamente, resetear el estado de error
+        console.log(`✅ Logo cargado desde CDN para "${specialtyName}"`);
+        setImageError(false);
       }}
     />
   );

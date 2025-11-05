@@ -49,7 +49,7 @@ const Services: React.FC<ServicePageProps> = ({
               specialty.name === "Andrología"
                 ? "Andrología y medicina sexual"
                 : specialty.name === "Psicología" || specialty.name === "Psicologia"
-                ? "Fisioterapia" // Cambiar Psicología a Fisioterapia en la UI
+                ? "Psicología" // Mantener el nombre original de Psicología
                 : specialty.name,
           }));
         
