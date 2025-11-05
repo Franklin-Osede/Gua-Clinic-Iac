@@ -99,11 +99,29 @@ const MedicalAppointmentTypes: React.FC<MedicalAppointmentTypesProps> = ({
 
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-      <div className="my-8 flex flex-col items-center w-full justify-center" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: '32px' }}>
-        <h3 className="text-primary-400 text-center 2xl:text-lg">
+      <div className="my-8 flex flex-col items-center w-full justify-center" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 16px', marginTop: '40px', marginBottom: '48px' }}>
+        <div style={{
+          fontSize: '14px',
+          fontWeight: 500,
+          color: '#9DABAF',
+          textAlign: 'center',
+          marginBottom: '12px',
+          letterSpacing: '0.3px',
+          lineHeight: '1.5'
+        }}>
           {serviceChoice}
-        </h3>
-        <h1 className="text-center">Selecciona el tipo de cita médica</h1>
+        </div>
+        <h1 className="text-center" style={{
+          fontSize: '22px',
+          fontWeight: 600,
+          color: '#242424',
+          textAlign: 'center',
+          margin: '0',
+          letterSpacing: '-0.2px',
+          lineHeight: '1.3'
+        }}>
+          Selecciona el tipo de cita médica
+        </h1>
       </div>
       {isLoading && (
         <div className="flex justify-center items-center col-span-2 mt-8">

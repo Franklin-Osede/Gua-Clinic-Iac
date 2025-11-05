@@ -89,25 +89,74 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
   );
 
   useEffect(() => {
+    console.log('📅 CalendarDatePicker montado/actualizado:', { doctorId, activeDate });
+    
+    // Resetear estados cuando se monta o cambia el doctorId
+    setLoadingDate(true);
+    setLoadingTime(true);
+    setSelectedDate(null);
+    setDateChosen("");
+    setAvailableTimes([]);
+    setAvailableDates([]);
+    setFullAvailableData([]);
+    setDateString("");
+    
     const initialize = async () => {
-      const currentDate = new Date();
-      const data = await fetchAvailability(currentDate);
+      try {
+        // Validar que doctorId sea válido
+        if (!doctorId || doctorId === 0) {
+          console.warn('⚠️ CalendarDatePicker: doctorId inválido o es 0:', doctorId);
+          setLoadingDate(false);
+          setLoadingTime(false);
+          return;
+        }
+        
+        const currentDate = new Date();
+        console.log('📅 Inicializando calendario para doctorId:', doctorId);
+        const data = await fetchAvailability(currentDate);
+        
+        console.log('📅 Datos recibidos de la API:', { 
+          length: data?.length || 0, 
+          firstItem: data?.[0],
+          sample: data?.slice(0, 3) 
+        });
 
-      if (data.length === 0) return;
+        if (!data || !Array.isArray(data) || data.length === 0) {
+          console.warn('⚠️ No hay datos disponibles para el doctor:', doctorId);
+          setLoadingDate(false);
+          setLoadingTime(false);
+          return;
+        }
 
-      const firstAvailableMonth = parseInt(data[0].slice(4, 6), 10) - 1;
-      const currentMonth = currentDate.getMonth();
+        // Validar que data[0] existe y tiene el formato correcto
+        if (!data[0] || typeof data[0] !== 'string' || data[0].length < 8) {
+          console.error('❌ Formato de datos inválido:', data[0]);
+          setLoadingDate(false);
+          setLoadingTime(false);
+          return;
+        }
 
-      if (firstAvailableMonth !== currentMonth) {
-        const firstDayOfMonth = new Date(
-          currentDate.getFullYear(),
-          firstAvailableMonth,
-          1,
-        );
-        const newData = await fetchAvailability(firstDayOfMonth);
-        parseAvailableDates(newData);
-      } else {
-        parseAvailableDates(data);
+        const firstAvailableMonth = parseInt(data[0].slice(4, 6), 10) - 1;
+        const currentMonth = currentDate.getMonth();
+
+        console.log('📅 Comparando meses:', { firstAvailableMonth, currentMonth });
+
+        if (firstAvailableMonth !== currentMonth) {
+          const firstDayOfMonth = new Date(
+            currentDate.getFullYear(),
+            firstAvailableMonth,
+            1,
+          );
+          console.log('📅 Cargando datos del mes:', firstDayOfMonth);
+          const newData = await fetchAvailability(firstDayOfMonth);
+          parseAvailableDates(newData);
+        } else {
+          parseAvailableDates(data);
+        }
+      } catch (error) {
+        console.error('❌ Error inicializando calendario:', error);
+        setLoadingDate(false);
+        setLoadingTime(false);
       }
     };
 
@@ -136,10 +185,19 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
   );
 
   useEffect(() => {
-    if (!activeDate || availableDates.length === 0) return;
+    if (!activeDate || availableDates.length === 0) {
+      // Si no hay fecha activa o no hay fechas disponibles, resetear tiempos
+      setAvailableTimes([]);
+      setLoadingTime(false);
+      return;
+    }
 
     const matchedDate = getMatchingDate(activeDate, availableDates);
-    if (!matchedDate) return;
+    if (!matchedDate) {
+      setAvailableTimes([]);
+      setLoadingTime(false);
+      return;
+    }
 
     setSelectedDate(matchedDate);
     const times = filterAvailableTimes(matchedDate);
@@ -254,10 +312,30 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
   };
 
   return (
-    <div className="flex items-center justify-center w-full flex-col">
-      <div className="w-full flex 2xl:items-center md:items-center items-start justify-center flex-col pl-6 mt-8">
-        <h3 className="text-primary-400">{serviceChoice}</h3>
-        <h1>Selecciona cuándo quieres tu cita</h1>
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="w-full flex items-center justify-center flex-col mt-8" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 16px', marginTop: '40px', marginBottom: '48px' }}>
+        <div style={{
+          fontSize: '14px',
+          fontWeight: 500,
+          color: '#9DABAF',
+          textAlign: 'center',
+          marginBottom: '12px',
+          letterSpacing: '0.3px',
+          lineHeight: '1.5'
+        }}>
+          {serviceChoice}
+        </div>
+        <h1 className="text-center" style={{
+          fontSize: '22px',
+          fontWeight: 600,
+          color: '#242424',
+          textAlign: 'center',
+          margin: '0',
+          letterSpacing: '-0.2px',
+          lineHeight: '1.3'
+        }}>
+          Selecciona cuándo quieres tu cita
+        </h1>
       </div>
       <div className="flex flex-col w-full md:mt-3 mt-0 pl-[1.375rem] max-w-[25rem]">
         <p className="text-primary-400 font-medium text-start m-2 2xl:mb-4">

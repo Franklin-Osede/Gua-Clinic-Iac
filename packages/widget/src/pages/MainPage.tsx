@@ -7,7 +7,7 @@ import AppointmentTypes from "../components/organisms/AppointmentTypes.tsx";
 import PatientRegistrationForm from "../components/organisms/PatientRegistrationForm.tsx";
 import AdditionalInformationForm from "../components/organisms/AdditionalInformationForm.tsx";
 import AppointmentConfirmed from "../components/organisms/AppointmentConfirmed.tsx";
-import { createAppointment, createPatient, pollAppointmentStatus } from "../services/GuaAPIService.ts";
+import { createAppointment, createPatient, pollAppointmentStatus, getDoctors } from "../services/GuaAPIService.ts";
 import { formatAppointmentData, formatPatientData } from "@gua/shared";
 import IdentificationPatient from "../components/organisms/IdentificationPatient.tsx";
 import PatientVATForm from "../components/organisms/PatientVATForm.tsx";
@@ -59,8 +59,9 @@ const LAST_PAGE_INDEX = 9;
 const VIRTUAL_DOCTOR_ID = 5;
 
 const MainPage: React.FC = () => {
-  const [showNextButton, setShowNextButton] = useState(false);
-  const [showPreviousButton, setShowPreviousButton] = useState(false);
+  // Los botones siempre están visibles (excepto en última página)
+  const [showNextButton, setShowNextButton] = useState(true);
+  const [showPreviousButton, setShowPreviousButton] = useState(true);
   const [disableNextButton, setDisableNextButton] = useState(false);
   const [disablePreviousButton, setDisablePreviousButton] = useState(false);
   const [showNoOptionError, setShowNoOptionError] = useState(false);
@@ -355,6 +356,97 @@ const MainPage: React.FC = () => {
       let nextPage = prev.currentPage + 1;
       const pages = prev.pages;
 
+      // Si es Laboratorio/Pruebas Diagnosticas, saltar página de profesionales
+      const specialtyName = pages[SPECIALTIES_PAGE_INDEX]?.name?.toLowerCase() || '';
+      const isLaboratory = specialtyName.includes('laboratorio') || 
+                          specialtyName.includes('pruebas diagnosticas') ||
+                          specialtyName.includes('29.');
+      
+      if (isLaboratory && nextPage === DOCTOR_PAGE_INDEX) {
+        console.log('🏥 Saltando página de profesionales para Laboratorio');
+        // Para Laboratorio, necesitamos obtener el doctor_id real desde la API
+        const serviceId = Number(pages[SPECIALTIES_PAGE_INDEX].extra) || 0;
+        console.log('🏥 ServiceId para Laboratorio:', serviceId);
+        
+        // Obtener doctores de Laboratorio de forma asíncrona
+        getDoctors(serviceId).then((doctors) => {
+            console.log('🏥 Doctores de Laboratorio obtenidos:', doctors);
+            if (doctors && doctors.length > 0) {
+              // Usar el primer doctor disponible
+              const laboratoryDoctorId = doctors[0].doctor_id || doctors[0].USU_ID || doctors[0].id || 0;
+              console.log('🏥 Usando doctor_id de Laboratorio:', laboratoryDoctorId);
+              
+              setPageState((current) => {
+                const updatedPages = { ...current.pages };
+                updatedPages[DOCTOR_PAGE_INDEX] = {
+                  ...updatedPages[DOCTOR_PAGE_INDEX],
+                  activeId: 0,
+                  isClicked: true,
+                  extra: laboratoryDoctorId,
+                  name: 'Laboratorio',
+                };
+                return {
+                  ...current,
+                  pages: updatedPages,
+                };
+              });
+            } else {
+              console.error('❌ No se encontraron doctores para Laboratorio');
+              // Si no hay doctores, mantener el serviceId como fallback
+              setPageState((current) => {
+                const updatedPages = { ...current.pages };
+                updatedPages[DOCTOR_PAGE_INDEX] = {
+                  ...updatedPages[DOCTOR_PAGE_INDEX],
+                  activeId: 0,
+                  isClicked: true,
+                  extra: serviceId, // Fallback temporal
+                  name: 'Laboratorio',
+                };
+                return {
+                  ...current,
+                  pages: updatedPages,
+                };
+              });
+            }
+        }).catch((error) => {
+            console.error('❌ Error obteniendo doctores de Laboratorio:', error);
+            // En caso de error, usar serviceId como fallback
+            setPageState((current) => {
+              const updatedPages = { ...current.pages };
+              updatedPages[DOCTOR_PAGE_INDEX] = {
+                ...updatedPages[DOCTOR_PAGE_INDEX],
+                activeId: 0,
+                isClicked: true,
+                extra: serviceId, // Fallback temporal
+                name: 'Laboratorio',
+              };
+              return {
+                ...current,
+                pages: updatedPages,
+              };
+            });
+          });
+        
+        // Configurar página de profesionales con datos temporales
+        const updatedPages = { ...prev.pages };
+        updatedPages[DOCTOR_PAGE_INDEX] = {
+          ...updatedPages[DOCTOR_PAGE_INDEX],
+          activeId: 0,
+          isClicked: true,
+          extra: serviceId, // Temporal hasta que se obtenga el doctor_id real
+          name: 'Laboratorio',
+        };
+        
+        // Saltar página 2 (Professionals) pero NO saltar página 3 (AppointmentTypes)
+        // Ir a página 3 (AppointmentTypes) normalmente
+        console.log('🏥 Saltando página 2 (Professionals), yendo a página 3 (AppointmentTypes)');
+        return {
+          ...prev,
+          pages: updatedPages,
+          currentPage: nextPage + 1, // Saltar página 2, ir a página 3 (AppointmentTypes)
+        };
+      }
+
       if (
         pages[DOCTOR_PAGE_INDEX]?.extra !== VIRTUAL_DOCTOR_ID &&
         nextPage === VIRTUAL_PAGE_INDEX
@@ -395,6 +487,22 @@ const MainPage: React.FC = () => {
     setPageState((prev) => {
       let previousPage = prev.currentPage - 1;
       const pages = prev.pages;
+
+      // Si es Laboratorio y estamos volviendo, saltar página de profesionales
+      const specialtyName = pages[SPECIALTIES_PAGE_INDEX]?.name?.toLowerCase() || '';
+      const isLaboratory = specialtyName.includes('laboratorio') || 
+                          specialtyName.includes('pruebas diagnosticas') ||
+                          specialtyName.includes('29.');
+      
+      if (isLaboratory && previousPage === DOCTOR_PAGE_INDEX) {
+        console.log('🏥 Volviendo, saltando página de profesionales (página 2)');
+        previousPage = DOCTOR_PAGE_INDEX - 1; // Volver a página 1 (MedicalAppointmentTypes)
+      }
+      
+      if (isLaboratory && previousPage === DATE_TIME_PAGE_INDEX) {
+        console.log('🏥 Volviendo desde calendario, saltando página de profesionales');
+        previousPage = VIRTUAL_PAGE_INDEX; // Volver a página 3 (AppointmentTypes)
+      }
 
       if (
         pages[DOCTOR_PAGE_INDEX]?.extra !== VIRTUAL_DOCTOR_ID &&
@@ -473,7 +581,6 @@ const MainPage: React.FC = () => {
         return (
           <Professionals
             activeProfessionalId={page.activeId}
-            professionalClicked={page.isClicked}
             serviceChoice={pageState.pages[SPECIALTIES_PAGE_INDEX].name ?? ""}
             onCardClick={handleCardClick}
             serviceId={
@@ -497,6 +604,7 @@ const MainPage: React.FC = () => {
       case 4:
         return (
           <CalendarDatePicker
+            key={`calendar-${pageState.currentPage}-${Number(pageState.pages[DOCTOR_PAGE_INDEX].extra)}`}
             activeTimeId={page.activeId}
             isDisabled={page.isClicked}
             serviceChoice={pageState.pages[SPECIALTIES_PAGE_INDEX].name ?? ""}
@@ -612,16 +720,8 @@ const MainPage: React.FC = () => {
       pageState.currentPage === 0 && !currentPage.isClicked;
     setDisablePreviousButton(shouldDisablePreviousButton);
 
-    // Asegurar que los botones se muestren cuando hay una selección
-    if (pageState.currentPage === 0 && currentPage.isClicked && currentPage.activeId !== null) {
-      console.log('🔄 useEffect: Showing buttons because selection exists:', { activeId: currentPage.activeId, isClicked: currentPage.isClicked });
-      setShowNextButton(true);
-      setShowPreviousButton(true);
-    } else if (pageState.currentPage === 0 && !currentPage.isClicked) {
-      // Si no hay selección en la página inicial, ocultar botones
-      setShowNextButton(false);
-      setShowPreviousButton(false);
-    }
+    // Los botones siempre están visibles - solo se deshabilitan según el estado
+    // No necesitamos cambiar showNextButton/showPreviousButton aquí
   }, [pageState.pages, pageState.currentPage]);
 
   const resetPageInfo = (pageIndexToReset: number) => {
@@ -668,8 +768,8 @@ const MainPage: React.FC = () => {
         }}
       >
         <div className="flex 2xl:flex-col md:flex-col flex-row-reverse gap-4" style={{ display: 'flex', gap: '16px', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', width: '100%', maxWidth: '400px', margin: '0 auto' }}>
-          {/* Botón SIGUIENTE - siempre visible si hay selección o showNextButton es true */}
-          {(showNextButton || (pageState.currentPage === 0 && pageState.pages[0].activeId !== null)) && (
+          {/* Botón SIGUIENTE - siempre visible (excepto en última página) */}
+          {showNextButton && (
             <button
               className={`${
                 disableNextButton
@@ -701,10 +801,11 @@ const MainPage: React.FC = () => {
               SIGUIENTE
             </button>
           )}
-          {/* Botón VOLVER - visible si hay selección o showPreviousButton es true */}
-          {(showPreviousButton || (pageState.currentPage === 0 && pageState.pages[0].activeId !== null)) &&
+          {/* Botón VOLVER - siempre visible (excepto en primera página y última página) */}
+          {showPreviousButton &&
             pageState.currentPage !== ADDITIONAL_INFO_FORM_INDEX &&
-            pageState.currentPage !== LAST_PAGE_INDEX && (
+            pageState.currentPage !== LAST_PAGE_INDEX &&
+            pageState.currentPage > 0 && (
               <button
                 className={`${
                   disablePreviousButton ? "cursor-default" : "hover:opacity-50"
