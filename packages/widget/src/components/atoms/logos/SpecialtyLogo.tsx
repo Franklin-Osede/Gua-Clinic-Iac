@@ -47,10 +47,8 @@ const SVG_MAP: Record<string, { cdn: string; fallback: FC<{ disabled: boolean }>
     fallback: GynecologyLogo 
   },
   'fisioterapia': { 
-    // IMPORTANTE: "Fisioterapia" en la UI es realmente "Psicología" en la API
-    // Usar logo de psicología porque Fisioterapia se muestra en lugar de Psicología
-    cdn: `${CDN_BASE_URL}/logos/psicología.svg`, 
-    fallback: PsychologyLogo 
+    cdn: `${CDN_BASE_URL}/logos/Fisioterapia.svg`, 
+    fallback: PhysicalTherapyLogo 
   },
   'psicologia': { 
     cdn: `${CDN_BASE_URL}/logos/psicología.svg`, 

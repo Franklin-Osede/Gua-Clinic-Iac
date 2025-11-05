@@ -48,8 +48,9 @@ const allowedProfessionals: Record<string, string[]> = {
   'urologia': ['nicolas nervo', 'andres humberto vargas', 'andrea noya'],
   'andrologia': ['nicolas nervo', 'andres humberto vargas', 'andrea noya'],
   'medicinasexual': ['nicolas nervo', 'andres humberto vargas', 'andrea noya'],
-  // Psicología (mostrada como "Fisioterapia" en la UI) - solo Jasmina García Velázquez
+  // Psicología - solo Jasmina García Velázquez
   'psicologia': ['jasmina', 'jasmina garcia', 'jasmina garcia velazquez', 'garcia velazquez', 'velazquez'],
+  // Fisioterapia: se maneja en el filtro especial (muestra todos excepto Jasmina)
   // Medicina Física y Rehabilitación
   'medicinafisica': ['maria consuelo', 'consuelo'],
   'rehabilitacion': ['maria consuelo', 'consuelo'],
@@ -170,10 +171,10 @@ const Professionals: React.FC<ProfessionalsProps> = ({
             fullRaw: doctor
           });
           
-          // Filtro especial para Fisioterapia (que es realmente Psicología): solo permitir Jasmina García Velázquez
-          // El serviceChoice viene como "Fisioterapia" pero en la API es "Psicología"
           const normalizedServiceChoice = normalizeName(serviceChoice || '');
-          if (normalizedServiceChoice.includes('fisioterapia') || normalizedServiceChoice.includes('psicologia')) {
+          
+          // Filtro especial para Psicología: solo permitir Jasmina García Velázquez
+          if (normalizedServiceChoice.includes('psicologia') && !normalizedServiceChoice.includes('fisioterapia')) {
             const normalizedDoctor = normalizeName(fullName);
             const normalizedFirstName = normalizeName(firstName);
             const normalizedLastName = normalizeName(lastName);
@@ -187,13 +188,35 @@ const Professionals: React.FC<ProfessionalsProps> = ({
             const isJasmina = hasJasmina && (hasGarcia || hasVelazquez);
             
             if (!isJasmina) {
-              console.log(`❌ Doctor filtrado para Fisioterapia (Psicología): "${fullName}" (ID: ${doctorId}) - no es Jasmina García Velázquez`);
+              console.log(`❌ Doctor filtrado para Psicología: "${fullName}" (ID: ${doctorId}) - no es Jasmina García Velázquez`);
               console.log(`   - hasJasmina: ${hasJasmina}, hasGarcia: ${hasGarcia}, hasVelazquez: ${hasVelazquez}`);
               return false;
             } else {
-              console.log(`✅ Doctor permitido para Fisioterapia (Psicología): "${fullName}" (ID: ${doctorId}) - es Jasmina García Velázquez`);
+              console.log(`✅ Doctor permitido para Psicología: "${fullName}" (ID: ${doctorId}) - es Jasmina García Velázquez`);
               return true;
             }
+          }
+          
+          // Para Fisioterapia: mostrar todos los profesionales que devuelve la API (sin Jasmina)
+          if (normalizedServiceChoice.includes('fisioterapia')) {
+            // Excluir explícitamente a Jasmina
+            const normalizedDoctor = normalizeName(fullName);
+            const normalizedFirstName = normalizeName(firstName);
+            const normalizedLastName = normalizeName(lastName);
+            
+            const hasJasmina = normalizedFirstName.includes('jasmina') || normalizedDoctor.includes('jasmina');
+            const hasGarcia = normalizedLastName.includes('garcia') || normalizedDoctor.includes('garcia');
+            const hasVelazquez = normalizedLastName.includes('velazquez') || normalizedDoctor.includes('velazquez');
+            const isJasmina = hasJasmina && (hasGarcia || hasVelazquez);
+            
+            if (isJasmina) {
+              console.log(`❌ Doctor filtrado para Fisioterapia: "${fullName}" (ID: ${doctorId}) - es Jasmina (pertenece a Psicología)`);
+              return false;
+            }
+            
+            // Permitir todos los demás profesionales para Fisioterapia
+            console.log(`✅ Doctor permitido para Fisioterapia: "${fullName}" (ID: ${doctorId})`);
+            return true;
           }
           
           // Para otras especialidades, usar el filtro normal

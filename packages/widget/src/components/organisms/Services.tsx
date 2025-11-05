@@ -32,7 +32,6 @@ const Services: React.FC<ServicePageProps> = ({
           'Enfermeria',
           'Anestesiología',
           'Anestesiologia',
-          'Fisioterapia', // Excluir Fisioterapia real, ya que usaremos Psicología como Fisioterapia
         ];
         
         // Filtrar y formatear especialidades
