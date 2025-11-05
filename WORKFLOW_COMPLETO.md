@@ -157,3 +157,4 @@ Widget: Polling hasta confirmación
 - **Idempotencia:** Si una cita ya existe, no se crea duplicada
 - **Tracking:** Cada cita tiene un trackingId interno para seguimiento
 
+

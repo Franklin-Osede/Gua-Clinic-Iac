@@ -44,22 +44,25 @@ const Services: React.FC<ServicePageProps> = ({
   }, []);
 
   return (
-    <div>
-      <div className="flex min-w-screen justify-center items-center flex-col">
-        <div className="w-full flex items-center justify-center flex-col mt-8">
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="flex min-w-screen justify-center items-center flex-col" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="w-full flex items-center justify-center flex-col mt-8" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <h3 className="text-primary-400 text-center">Bienvenido/a a Cita Online 👋</h3>
           <h1 className="text-center">Selecciona la Especialidad</h1>
         </div>
-        <div className="flex flex-col items-center my-8">
+        <div className="flex flex-col items-center my-8" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', maxWidth: '400px', margin: '0 auto', marginTop: '48px' }}>
           <div 
             className="grid 2xl:grid-cols-3 md:grid-cols-3 grid-cols-2 2xl:gap-6 md:gap-6 gap-4"
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-              gap: '16px',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '8px',
               width: '100%',
-              maxWidth: '100%',
+              maxWidth: '360px',
               boxSizing: 'border-box',
+              margin: '0 auto',
+              justifyContent: 'center',
+              padding: '0',
             }}
           >
             {loading ? (

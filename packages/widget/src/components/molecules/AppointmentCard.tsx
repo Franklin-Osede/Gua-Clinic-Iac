@@ -123,9 +123,8 @@ const AppointmentCardOption: React.FC<AppointmentCardProps> = ({
       } 2xl:w-[24rem] md:w-[22rem] w-[20rem] 2xl:h-36 md:h-28 h-24 flex items-center justify-start border rounded-2xl drop-shadow py-2`}
       style={cardStyle}
       onClick={() => {
-        if (!isDisabled) {
-          onCardClick();
-        }
+        // Siempre permitir click para toggle (seleccionar/deseleccionar)
+        onCardClick();
       }}
     >
       <div 

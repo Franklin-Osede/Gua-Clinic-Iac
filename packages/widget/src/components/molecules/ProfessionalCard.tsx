@@ -25,8 +25,9 @@ const ProfessionalCardOption: React.FC<ProfessionalCardProps> = ({
 
   // Estilos inline como fallback para WordPress
   const cardStyle: React.CSSProperties = {
-    width: '160px', // w-40
-    height: '128px', // h-32
+    width: '100%',
+    maxWidth: '170px',
+    height: '128px',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -40,6 +41,7 @@ const ProfessionalCardOption: React.FC<ProfessionalCardProps> = ({
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
     cursor: !isDisabled ? 'pointer' : 'default',
     transition: 'opacity 0.2s',
+    margin: '0 auto',
   };
 
   const photoContainerStyle: React.CSSProperties = {
@@ -78,9 +80,8 @@ const ProfessionalCardOption: React.FC<ProfessionalCardProps> = ({
       } 2xl:w-44 md:w-44 w-40 2xl:h-36 md:h-36 h-32 flex items-center justify-evenly border rounded-2xl drop-shadow flex-col py-2`}
       style={cardStyle}
       onClick={() => {
-        if (!isDisabled) {
-          handleServiceClick();
-        }
+        // Siempre permitir click para toggle (seleccionar/deseleccionar)
+        handleServiceClick();
       }}
     >
       <div

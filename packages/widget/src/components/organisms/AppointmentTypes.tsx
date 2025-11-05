@@ -86,12 +86,12 @@ const AppointmentTypes: React.FC<AppointmentTypesProps> = ({
   }, [fetchTypesAndUpdateOptions, isLoading]);
 
   return (
-    <div className="flex items-center justify-center w-full flex-col">
-      <div className="flex flex-col 2xl:items-center md:items-center items-start w-full justify-center my-8">
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="flex flex-col items-center w-full justify-center my-8" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         <h3 className="text-primary-400 text-center 2xl:text-lg">
           {serviceChoice}
         </h3>
-        <h1>Elige cómo será tu cita</h1>
+        <h1 className="text-center">Elige cómo será tu cita</h1>
       </div>
       {isLoading && (
         <div className="flex justify-center items-center col-span-2 mt-8">
@@ -99,7 +99,7 @@ const AppointmentTypes: React.FC<AppointmentTypesProps> = ({
         </div>
       )}
       {!isLoading && (
-        <div>
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', maxWidth: '400px', margin: '0 auto' }}>
           <div 
             className="flex flex-col 2xl:gap-6 md:gap-6 gap-4 items-center justify-center"
             style={{
@@ -120,7 +120,7 @@ const AppointmentTypes: React.FC<AppointmentTypesProps> = ({
                 logoType={appt.logoType}
                 isActive={activeAppointmentId === index}
                 onAppointmentTypeClick={onCardClick}
-                isDisabled={appointmentClicked}
+                isDisabled={false}
                 info={appt.extra}
               />
             ))}

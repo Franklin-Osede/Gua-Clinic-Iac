@@ -5,3 +5,4 @@ echo "✅ ZIP creado en ~/Desktop/gua-clinic-widget-FINAL-v1.0.1.zip"
 ls -lh ~/Desktop/gua-clinic-widget-FINAL-v1.0.1.zip
 
 
+

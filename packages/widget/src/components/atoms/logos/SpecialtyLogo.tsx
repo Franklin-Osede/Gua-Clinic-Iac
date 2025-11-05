@@ -8,18 +8,21 @@ interface SpecialtyLogoProps {
 // Fallback: usar componentes existentes si no hay SVG
 import UrologyLogo from "./UrologyLogo";
 
-// Mapeo de especialidades a archivos SVG (se cargarán desde CDN como los otros logos)
+// Mapeo de especialidades a archivos SVG
+// En desarrollo: usar fallback URO (CDN no disponible), en producción: usar CDN
+const isDevelopment = import.meta.env.DEV;
 const CDN_BASE_URL = 'https://cdn.gua.com';
-const SVG_MAP: Record<string, string> = {
-  'urologia': `${CDN_BASE_URL}/logos/UROLOGÍA.svg`,
-  'andrologia': `${CDN_BASE_URL}/logos/Andrología.svg`,
-  'medicinasexual': `${CDN_BASE_URL}/logos/Andrología.svg`,
-  'ginecologia': `${CDN_BASE_URL}/logos/ginecología.svg`,
-  'fisioterapia': `${CDN_BASE_URL}/logos/Fisioterapia.svg`,
-  'medicinafisica': `${CDN_BASE_URL}/logos/Medicina Física y rehabilitadora.svg`,
-  'rehabilitacion': `${CDN_BASE_URL}/logos/Medicina Física y rehabilitadora.svg`,
-  'psicologia': `${CDN_BASE_URL}/logos/psicología.svg`,
-  'medicinaintegrativa': `${CDN_BASE_URL}/logos/medicina integrativa.svg`,
+
+const SVG_MAP: Record<string, string | null> = {
+  'urologia': isDevelopment ? null : `${CDN_BASE_URL}/logos/UROLOGÍA.svg`,
+  'andrologia': isDevelopment ? null : `${CDN_BASE_URL}/logos/Andrología.svg`,
+  'medicinasexual': isDevelopment ? null : `${CDN_BASE_URL}/logos/Andrología.svg`,
+  'ginecologia': isDevelopment ? null : `${CDN_BASE_URL}/logos/ginecología.svg`,
+  'fisioterapia': isDevelopment ? null : `${CDN_BASE_URL}/logos/Fisioterapia.svg`,
+  'medicinafisica': isDevelopment ? null : `${CDN_BASE_URL}/logos/Medicina Física y rehabilitadora.svg`,
+  'rehabilitacion': isDevelopment ? null : `${CDN_BASE_URL}/logos/Medicina Física y rehabilitadora.svg`,
+  'psicologia': isDevelopment ? null : `${CDN_BASE_URL}/logos/psicología.svg`,
+  'medicinaintegrativa': isDevelopment ? null : `${CDN_BASE_URL}/logos/medicina integrativa.svg`,
 };
 
 export const SpecialtyLogo: FC<SpecialtyLogoProps> = ({ specialtyName, disabled }) => {
@@ -39,6 +42,12 @@ export const SpecialtyLogo: FC<SpecialtyLogoProps> = ({ specialtyName, disabled 
     }
   }
   
+  // En desarrollo, usar fallback directamente (CDN no disponible)
+  // En producción, intentar cargar desde CDN
+  if (isDevelopment || !svgPath) {
+    return <UrologyLogo disabled={disabled} />;
+  }
+  
   const logoStyle: React.CSSProperties = {
     width: '40px',
     height: '40px',
@@ -46,25 +55,20 @@ export const SpecialtyLogo: FC<SpecialtyLogoProps> = ({ specialtyName, disabled 
     objectFit: 'contain',
   };
   
-  // Si hay SVG, intentar cargarlo
-  if (svgPath) {
-    return (
-      <img 
-        src={svgPath} 
-        alt={specialtyName} 
-        style={logoStyle}
-        onError={(e) => {
-          // Si falla cargar el SVG, ocultar y usar fallback
-          const target = e.currentTarget;
-          target.style.display = 'none';
-          // El componente padre mostrará el fallback
-        }}
-      />
-    );
-  }
-  
-  // Fallback: usar componentes existentes para especialidades sin SVG
-  return <UrologyLogo disabled={disabled} />;
+  // Intentar cargar desde CDN
+  return (
+    <img 
+      src={svgPath} 
+      alt={specialtyName} 
+      style={logoStyle}
+      onError={(e) => {
+        // Si falla cargar el SVG, usar fallback
+        console.warn(`Failed to load logo for ${specialtyName} from CDN, using fallback`);
+        // Esto debería ser manejado por el componente padre, pero por ahora usamos fallback
+        e.currentTarget.style.display = 'none';
+      }}
+    />
+  );
 };
 
 export default SpecialtyLogo;

@@ -114,3 +114,4 @@ lsof -i :5173
 2. **Ve los cambios en tiempo real** en http://localhost:5173
 3. **Cuando estés listo**, ejecuta `npm run build` para generar el bundle de producción
 
+

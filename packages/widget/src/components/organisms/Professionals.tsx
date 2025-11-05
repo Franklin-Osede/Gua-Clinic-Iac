@@ -132,12 +132,12 @@ const Professionals: React.FC<ProfessionalsProps> = ({
   }, [serviceId]);
 
   return (
-    <div className="flex min-w-screen justify-center items-center flex-col">
-      <div className="w-full flex 2xl:items-center md:items-center items-start justify-center flex-col ml-2 mt-8">
-        <h3 className="text-primary-400">{serviceChoice}</h3>
-        <h1>Selecciona el profesional</h1>
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="w-full flex items-center justify-center flex-col mt-8" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <h3 className="text-primary-400 text-center">{serviceChoice}</h3>
+        <h1 className="text-center">Selecciona el profesional</h1>
       </div>
-      <div className="flex flex-col items-center my-8">
+      <div className="flex flex-col items-center my-8" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', maxWidth: '400px', margin: '0 auto', marginTop: '48px' }}>
         <div
           className={`
             ${
@@ -148,13 +148,15 @@ const Professionals: React.FC<ProfessionalsProps> = ({
            2xl:gap-6 md:gap-6 gap-4`}
           style={{
             display: professionalOptions.length < 3 ? 'flex' : 'grid',
-            gridTemplateColumns: professionalOptions.length >= 3 ? 'repeat(2, minmax(0, 1fr))' : undefined,
-            gap: '16px',
+            gridTemplateColumns: professionalOptions.length >= 3 ? 'repeat(2, 1fr)' : undefined,
+            gap: '8px',
             width: '100%',
-            maxWidth: '100%',
+            maxWidth: '360px',
             boxSizing: 'border-box',
+            margin: '0 auto',
             alignItems: professionalOptions.length < 3 ? 'center' : undefined,
             justifyContent: professionalOptions.length < 3 ? 'center' : undefined,
+            padding: '0',
           }}
         >
           {loading ? (
@@ -168,7 +170,7 @@ const Professionals: React.FC<ProfessionalsProps> = ({
                 id={index}
                 name={doctor.name}
                 photo={doctor.photo}
-                isDisabled={professionalClicked}
+                isDisabled={false}
                 isActive={activeProfessionalId === index}
                 onCardClick={onCardClick}
                 doctorInfo={doctor.id}

@@ -90,13 +90,40 @@ const MainPage: React.FC = () => {
     name?: string,
     extra?: number | null | AppointmentInfo | string,
   ) => {
-    setShowNextButton(true);
-    setShowPreviousButton(true);
+    console.log('🖱️ Card clicked:', { activeId, name, extra, currentPage: pageState.currentPage });
+    
+    // Si activeId es null, significa que se deseleccionó - ocultar botones
+    // Si activeId no es null, significa que se seleccionó - mostrar botones
+    const shouldShowButtons = activeId !== null;
+    setShowNextButton(shouldShowButtons);
+    setShowPreviousButton(shouldShowButtons);
     setShowNoOptionError(false);
+    
     setPageState((prev) => {
+      const currentPage = prev.pages[prev.currentPage];
+      
+      // Si se está deseleccionando (activeId es null), limpiar todo
+      if (activeId === null) {
+        const updatedPage = {
+          activeId: null,
+          isClicked: false,
+          name: "",
+          extra: null,
+        };
+        
+        return {
+          ...prev,
+          pages: {
+            ...prev.pages,
+            [prev.currentPage]: updatedPage,
+          },
+        };
+      }
+      
+      // Si se está seleccionando, actualizar con los datos
       const updatedPage = {
         activeId: activeId,
-        isClicked: name ? name.length > 0 && activeId !== null : true,
+        isClicked: true,
         ...(name && { name }),
         ...(extra && { extra }),
       };
@@ -425,7 +452,7 @@ const MainPage: React.FC = () => {
         return (
           <Services
             activeCardId={page.activeId}
-            initialCard={!page.isClicked}
+            initialCard={true}
             onCardClick={handleCardClick}
           />
         );
@@ -584,6 +611,17 @@ const MainPage: React.FC = () => {
     const shouldDisablePreviousButton =
       pageState.currentPage === 0 && !currentPage.isClicked;
     setDisablePreviousButton(shouldDisablePreviousButton);
+
+    // Asegurar que los botones se muestren cuando hay una selección
+    if (pageState.currentPage === 0 && currentPage.isClicked && currentPage.activeId !== null) {
+      console.log('🔄 useEffect: Showing buttons because selection exists:', { activeId: currentPage.activeId, isClicked: currentPage.isClicked });
+      setShowNextButton(true);
+      setShowPreviousButton(true);
+    } else if (pageState.currentPage === 0 && !currentPage.isClicked) {
+      // Si no hay selección en la página inicial, ocultar botones
+      setShowNextButton(false);
+      setShowPreviousButton(false);
+    }
   }, [pageState.pages, pageState.currentPage]);
 
   const resetPageInfo = (pageIndexToReset: number) => {
@@ -606,27 +644,52 @@ const MainPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start">
-      <div className="flex-grow flex items-start justify-center">
+    <div className="min-h-screen flex flex-col items-center justify-start" style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start' }}>
+      <div className="flex-grow flex items-start justify-center" style={{ width: '100%', flex: '1 1 auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
         {allPages[pageState.currentPage].component}
       </div>
 
+      {/* Contenedor de botones - siempre visible si no es la última página */}
+      {(pageState.currentPage !== LAST_PAGE_INDEX) && (
       <div
-        className={`flex items-start justify-center ${
-          pageState.currentPage === LAST_PAGE_INDEX
-            ? "h-0"
-            : "2xl:h-40 md:h-40 h-20 mt-2"
-        }`}
+        className="flex items-center justify-center w-full"
+        style={{
+          width: '100%',
+          display: 'flex',
+          minHeight: '100px',
+          marginTop: '32px',
+          marginBottom: '32px',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px',
+          boxSizing: 'border-box',
+          position: 'relative',
+          zIndex: 10,
+        }}
       >
-        <></>
-        <div className="flex 2xl:flex-col md:flex-col flex-row-reverse gap-4">
-          {showNextButton && pageState.currentPage !== LAST_PAGE_INDEX && (
+        <div className="flex 2xl:flex-col md:flex-col flex-row-reverse gap-4" style={{ display: 'flex', gap: '16px', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', width: '100%', maxWidth: '400px', margin: '0 auto' }}>
+          {/* Botón SIGUIENTE - siempre visible si hay selección o showNextButton es true */}
+          {(showNextButton || (pageState.currentPage === 0 && pageState.pages[0].activeId !== null)) && (
             <button
               className={`${
                 disableNextButton
                   ? "bg-disabled cursor-default"
                   : "bg-accent-300 hover:brightness-95"
               } min-w-min w-32 2xl:text-xs md:text-xs text-[0.6rem] py-4 2xl:px-8 md:px-8 px-4 text-white`}
+              style={{
+                backgroundColor: disableNextButton ? '#EFEFEF' : '#EAC607',
+                color: '#FFFFFF',
+                minWidth: '128px',
+                width: '128px',
+                padding: '16px 32px',
+                fontSize: '0.6rem',
+                fontWeight: '500',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: disableNextButton ? 'default' : 'pointer',
+                opacity: disableNextButton ? 0.5 : 1,
+                transition: 'all 0.2s',
+              }}
               onClick={() => {
                 if (!disableNextButton) {
                   handleNext().then();
@@ -638,13 +701,28 @@ const MainPage: React.FC = () => {
               SIGUIENTE
             </button>
           )}
-          {showPreviousButton &&
+          {/* Botón VOLVER - visible si hay selección o showPreviousButton es true */}
+          {(showPreviousButton || (pageState.currentPage === 0 && pageState.pages[0].activeId !== null)) &&
             pageState.currentPage !== ADDITIONAL_INFO_FORM_INDEX &&
             pageState.currentPage !== LAST_PAGE_INDEX && (
               <button
                 className={`${
                   disablePreviousButton ? "cursor-default" : "hover:opacity-50"
                 } min-w-min w-32 2xl:text-xs md:text-xs text-[0.6rem] bg-white text-primary-400 py-4 2xl:px-8 md:px-8 px-4 2xl:mt-2 md:mt-2`}
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  color: '#242424',
+                  minWidth: '128px',
+                  width: '128px',
+                  padding: '16px 32px',
+                  fontSize: '0.6rem',
+                  fontWeight: '500',
+                  border: '1px solid #DDDDDD',
+                  borderRadius: '8px',
+                  cursor: disablePreviousButton ? 'default' : 'pointer',
+                  opacity: disablePreviousButton ? 0.5 : 1,
+                  transition: 'all 0.2s',
+                }}
                 onClick={() => {
                   if (!disablePreviousButton) {
                     handleReset();
@@ -653,9 +731,10 @@ const MainPage: React.FC = () => {
               >
                 VOLVER
               </button>
-            )}
+          )}
         </div>
       </div>
+      )}
     </div>
   );
 };

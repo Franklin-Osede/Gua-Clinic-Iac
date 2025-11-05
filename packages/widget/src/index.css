@@ -94,11 +94,26 @@ gua-widget .flex {
 }
 
 /* ⚠️ SCOPE: Todos los estilos scoped al widget para evitar conflictos con WordPress */
+/* También incluir #root para desarrollo local */
+#root,
 #gua-widget-container,
 gua-widget {
   font-family: "Work Sans", sans-serif !important;
   color: #242424 !important;
   box-sizing: border-box !important;
+}
+
+/* Aplicar estilos de Tailwind también a #root en desarrollo */
+#root * {
+  box-sizing: border-box !important;
+}
+
+#root .flex {
+  display: flex !important;
+}
+
+#root .grid {
+  display: grid !important;
 }
 
 #gua-widget-container h1,

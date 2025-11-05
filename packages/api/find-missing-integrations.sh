@@ -39,3 +39,4 @@ echo "$RESOURCES" | jq -r '.items[] | select(.resourceMethods != null) | "\(.id)
 done
 
 
+

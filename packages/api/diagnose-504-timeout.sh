@@ -378,3 +378,4 @@ echo ""
 echo "✅ Diagnóstico completo"
 
 
+

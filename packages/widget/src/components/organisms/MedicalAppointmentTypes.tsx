@@ -98,12 +98,12 @@ const MedicalAppointmentTypes: React.FC<MedicalAppointmentTypesProps> = ({
   }, [fetchAppointmentTypesAndUpdateOptions, isLoading]);
 
   return (
-    <div className="flex items-center justify-center w-full flex-col">
-      <div className="my-8 flex flex-col 2xl:items-center md:items-center items-start w-full justify-center">
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="my-8 flex flex-col items-center w-full justify-center" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: '32px' }}>
         <h3 className="text-primary-400 text-center 2xl:text-lg">
           {serviceChoice}
         </h3>
-        <h1>Selecciona el tipo de cita médica</h1>
+        <h1 className="text-center">Selecciona el tipo de cita médica</h1>
       </div>
       {isLoading && (
         <div className="flex justify-center items-center col-span-2 mt-8">
@@ -111,8 +111,8 @@ const MedicalAppointmentTypes: React.FC<MedicalAppointmentTypesProps> = ({
         </div>
       )}
       {!isLoading && (
-        <div>
-          <div className="flex flex-col 2xl:gap-6 md:gap-6 gap-4 items-center justify-center">
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', maxWidth: '400px', margin: '0 auto' }}>
+          <div className="flex flex-col 2xl:gap-6 md:gap-6 gap-4 items-center justify-center" style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
             {finalAppointmentOptions.map((appt, index) => (
               <AppointmentCardOption
                 id={index}
@@ -122,7 +122,7 @@ const MedicalAppointmentTypes: React.FC<MedicalAppointmentTypesProps> = ({
                 logoType={appt.logoType}
                 isActive={activeAppointmentId === index}
                 onAppointmentTypeClick={onCardClick}
-                isDisabled={appointmentClicked}
+                isDisabled={false}
                 info={appt.extra}
               />
             ))}
