@@ -85,6 +85,7 @@ const MainPage: React.FC = () => {
   const [isLoadingAppointment, setIsLoadingAppointment] = useState(false);
   const [showAppointmentError, setShowAppointmentError] = useState(false);
   const [appointmentStatus, setAppointmentStatus] = useState<'processing' | 'confirmed' | 'failed' | null>(null);
+  const [calendarRefreshKey, setCalendarRefreshKey] = useState<number>(0); // Clave para refrescar calendario
 
   const handleCardClick = (
     activeId: number | null,
@@ -312,6 +313,12 @@ const MainPage: React.FC = () => {
       if (pollResult.confirmed) {
         setAppointmentStatus('confirmed');
         setShowAppointmentError(false);
+        
+        // Actualizar refreshKey para forzar actualización del calendario
+        // Esto hará que el calendario recargue la disponibilidad y oculte la hora reservada
+        setCalendarRefreshKey(prev => prev + 1);
+        console.log('✅ Cita confirmada, refrescando calendario...');
+        
         return true;
       } else {
         // Si falló o hubo timeout
@@ -602,15 +609,32 @@ const MainPage: React.FC = () => {
           />
         );
       case 4:
+        const doctorPageExtra = pageState.pages[DOCTOR_PAGE_INDEX].extra;
+        let doctorId = 0;
+        
+        if (doctorPageExtra !== null && doctorPageExtra !== undefined) {
+          if (typeof doctorPageExtra === 'number') {
+            doctorId = doctorPageExtra;
+          } else {
+            const parsed = Number(doctorPageExtra);
+            doctorId = isNaN(parsed) ? 0 : parsed;
+          }
+        }
+        
+        if (doctorId === 0) {
+          console.warn('⚠️ MainPage: doctorId es 0 o inválido, extra value:', doctorPageExtra);
+        }
+        
         return (
           <CalendarDatePicker
-            key={`calendar-${pageState.currentPage}-${Number(pageState.pages[DOCTOR_PAGE_INDEX].extra)}`}
+            key={`calendar-${pageState.currentPage}-${doctorId}`}
             activeTimeId={page.activeId}
             isDisabled={page.isClicked}
             serviceChoice={pageState.pages[SPECIALTIES_PAGE_INDEX].name ?? ""}
             onDateTimeChosen={handleCardClick}
             activeDate={String(page.extra) ?? ""}
-            doctorId={Number(pageState.pages[DOCTOR_PAGE_INDEX].extra)}
+            doctorId={doctorId}
+            refreshKey={calendarRefreshKey}
           />
         );
       case 5:

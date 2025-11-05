@@ -9,14 +9,48 @@ export class DoctorAvailabilityController {
 
   @Get(':doctorId/:startDate')
   async getDoctorAgenda(
-    @Param('doctorId') doctorId: number,
+    @Param('doctorId') doctorId: string,
     @Param('startDate') startDate: string,
     @Query('dates_to_fetch') datesToFetch: number = 31
   ) {
-    console.log(`🎯 DoctorAvailabilityController.getDoctorAgenda called:`, { doctorId, startDate, datesToFetch })
+    const doctorIdNum = parseInt(doctorId, 10);
     
-    // Llamar al servicio real con protección automática
-    return this.doctorAvailabilityService.getDoctorAgenda(doctorId, startDate, datesToFetch)
+    if (isNaN(doctorIdNum) || doctorIdNum <= 0) {
+      console.error(`❌ DoctorAvailabilityController: doctorId inválido: ${doctorId}`);
+      throw new Error(`Invalid doctorId: ${doctorId}. Must be a positive number.`);
+    }
+    
+    if (!startDate || startDate.length < 8) {
+      console.error(`❌ DoctorAvailabilityController: startDate inválido: ${startDate}`);
+      throw new Error(`Invalid startDate: ${startDate}. Expected format: yyyyMMdd or YYYY-MM-DD.`);
+    }
+    
+    console.log(`🎯 DoctorAvailabilityController.getDoctorAgenda called:`, { doctorId: doctorIdNum, startDate, datesToFetch })
+    
+    try {
+      // Llamar al servicio real con protección automática
+      const result = await this.doctorAvailabilityService.getDoctorAgenda(doctorIdNum, startDate, datesToFetch);
+      return result;
+    } catch (error) {
+      console.error(`❌ Error en DoctorAvailabilityController.getDoctorAgenda:`, error);
+      console.error(`❌ Error stack:`, error.stack);
+      
+      // Si el error ya tiene un mensaje válido, devolver estructura de error estándar
+      if (error.message) {
+        return {
+          Successful: false,
+          Data: { Disponibilidad: [] },
+          Html: error.message
+        };
+      }
+      
+      // Error genérico si no hay mensaje
+      return {
+        Successful: false,
+        Data: { Disponibilidad: [] },
+        Html: 'Error interno del servidor al obtener disponibilidad'
+      };
+    }
   }
 
   private generateMockSlots(doctorId: number, startDate: string, datesToFetch: number) {

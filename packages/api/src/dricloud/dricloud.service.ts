@@ -580,6 +580,17 @@ export class DriCloudService {
   }
 
   async getDoctorAgenda(doctorId: number, startDate: string, datesToFetch: number = 31) {
+    // Validar parámetros
+    if (!doctorId || doctorId <= 0) {
+      this.logger.error(`❌ getDoctorAgenda: doctorId inválido: ${doctorId}`);
+      throw new Error(`Invalid doctorId: ${doctorId}. Must be a positive number.`);
+    }
+    
+    if (!startDate || startDate.length < 8) {
+      this.logger.error(`❌ getDoctorAgenda: startDate inválido: ${startDate}`);
+      throw new Error(`Invalid startDate: ${startDate}. Expected format: yyyyMMdd or YYYY-MM-DD.`);
+    }
+    
     return this.makeDriCloudRequest(async () => {
       const token = await this.getValidToken();
       
@@ -592,25 +603,51 @@ export class DriCloudService {
         // Ya está en formato yyyyMMdd
         fechaFormatoDriCloud = startDate;
       } else {
+        this.logger.error(`❌ Formato de fecha inválido: ${startDate}`);
         throw new Error(`Formato de fecha inválido: ${startDate}. Esperado: YYYY-MM-DD o yyyyMMdd`);
       }
       
       this.logger.debug(`📅 Converted date ${startDate} -> ${fechaFormatoDriCloud}`);
+      this.logger.debug(`📅 Requesting agenda for doctor ${doctorId}, date: ${fechaFormatoDriCloud}, days: ${datesToFetch}`);
       
-      const response = await this.httpService.post(
-        `https://apidricloud.dricloud.net/${await this.getClinicUrl()}/api/APIWeb/GetAgendaDisponibilidad`,
-        {
-          USU_ID: doctorId,
-          fecha: fechaFormatoDriCloud,
-          diasRecuperar: datesToFetch
-        },
-        { 
-          headers: { USU_APITOKEN: token },
-          timeout: this.HTTP_TIMEOUT_MS
+      try {
+        const response = await this.httpService.post(
+          `https://apidricloud.dricloud.net/${await this.getClinicUrl()}/api/APIWeb/GetAgendaDisponibilidad`,
+          {
+            USU_ID: doctorId,
+            fecha: fechaFormatoDriCloud,
+            diasRecuperar: datesToFetch
+          },
+          { 
+            headers: { USU_APITOKEN: token },
+            timeout: this.HTTP_TIMEOUT_MS
+          }
+        ).toPromise();
+        
+        this.logger.debug(`✅ GetAgendaDisponibilidad response received for doctor ${doctorId}`);
+        
+        // Validar respuesta
+        if (!response || !response.data) {
+          this.logger.error(`❌ Respuesta vacía de DriCloud para doctor ${doctorId}`);
+          return { Successful: false, Data: { Disponibilidad: [] }, Html: 'Empty response from DriCloud' };
         }
-      ).toPromise();
-      
-      return response.data;
+        
+        // Verificar si la respuesta indica éxito
+        if (response.data.Successful === false) {
+          this.logger.warn(`⚠️ DriCloud returned Successful: false for doctor ${doctorId}, message: ${response.data.Html}`);
+          return { Successful: false, Data: { Disponibilidad: [] }, Html: response.data.Html || 'Unknown error' };
+        }
+        
+        return response.data;
+      } catch (error) {
+        this.logger.error(`❌ Error en petición a DriCloud GetAgendaDisponibilidad:`, error.message);
+        // Si es error de timeout o conexión, devolver estructura válida
+        if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+          this.logger.error(`❌ Timeout al obtener agenda para doctor ${doctorId}`);
+          return { Successful: false, Data: { Disponibilidad: [] }, Html: 'Timeout connecting to DriCloud' };
+        }
+        throw error;
+      }
     });
   }
 

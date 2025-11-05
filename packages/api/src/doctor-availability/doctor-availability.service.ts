@@ -8,8 +8,37 @@ export class DoctorAvailabilityService {
   async getDoctorAgenda(doctorId: number, startDate: string, datesToFetch: number) {
     console.log(`🔍 DoctorAvailabilityService.getDoctorAgenda called with:`, { doctorId, startDate, datesToFetch })
     
-    // Llamar directamente a DriCloud con protección automática
-    return this.driCloudService.getDoctorAgenda(doctorId, startDate, datesToFetch)
+    if (!doctorId || doctorId <= 0) {
+      throw new Error(`Invalid doctorId: ${doctorId}. Must be a positive number.`);
+    }
+    
+    if (!startDate || startDate.length < 8) {
+      throw new Error(`Invalid startDate: ${startDate}. Expected format: yyyyMMdd or YYYY-MM-DD.`);
+    }
+    
+    if (datesToFetch <= 0 || datesToFetch > 365) {
+      throw new Error(`Invalid datesToFetch: ${datesToFetch}. Must be between 1 and 365.`);
+    }
+    
+    try {
+      // Llamar directamente a DriCloud con protección automática
+      const result = await this.driCloudService.getDoctorAgenda(doctorId, startDate, datesToFetch);
+      
+      // Validar que la respuesta tenga el formato correcto
+      if (!result) {
+        console.warn(`⚠️ DoctorAvailabilityService: respuesta vacía de DriCloud para doctor ${doctorId}`);
+        return { Successful: false, Data: { Disponibilidad: [] } };
+      }
+      
+      return result;
+    } catch (error) {
+      console.error(`❌ Error en DoctorAvailabilityService.getDoctorAgenda:`, error);
+      // Si es un error de DriCloud, devolver estructura válida
+      if (error.message && error.message.includes('DriCloud')) {
+        return { Successful: false, Data: { Disponibilidad: [] }, Html: error.message };
+      }
+      throw error;
+    }
   }
 
   private generateMockAvailability(doctorId: number, startDate: string, datesToFetch: number) {

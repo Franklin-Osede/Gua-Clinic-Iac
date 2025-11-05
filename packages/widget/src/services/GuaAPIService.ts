@@ -129,7 +129,26 @@ export const getDoctorAgenda = async (
     const response = await apiClient.get(
       `/doctor-availability/${doctorId}/${startDate}?dates_to_fetch=${datesToFetch}`,
     );
-    return response.data;
+    
+    // DriCloud devuelve { Successful: true, Data: { Disponibilidad: [...] } }
+    // Extraer el array de Disponibilidad
+    if (response.data?.Data?.Disponibilidad) {
+      return response.data.Data.Disponibilidad;
+    }
+    
+    // Si ya es un array directo (formato antiguo o mock)
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    
+    // Si viene como objeto con Disponibilidad en el root
+    if (response.data?.Disponibilidad && Array.isArray(response.data.Disponibilidad)) {
+      return response.data.Disponibilidad;
+    }
+    
+    // Fallback: devolver array vacío si no hay formato reconocido
+    console.warn('⚠️ Formato de respuesta no reconocido:', response.data);
+    return [];
   } catch (error) {
     console.error("Error fetching doctors data:", error);
     throw error;

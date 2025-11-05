@@ -173,28 +173,22 @@ const Professionals: React.FC<ProfessionalsProps> = ({
           
           const normalizedServiceChoice = normalizeName(serviceChoice || '');
           
-          // Filtro especial para Psicología: solo permitir Jasmina García Velázquez
+          // Para Andrología y Ginecología: mostrar TODOS los doctores que vienen de la API
+          // (sin filtrado por nombre, ya que los nombres pueden cambiar en DriCloud)
+          if (normalizedServiceChoice.includes('andrologia') || 
+              normalizedServiceChoice.includes('medicinasexual') ||
+              normalizedServiceChoice.includes('ginecologia')) {
+            console.log(`✅ Doctor permitido para "${serviceChoice}": "${fullName}" (ID: ${doctorId}) - mostrando todos los doctores de la API`);
+            return true;
+          }
+          
+          // Filtro especial para Psicología: preferir Jasmina García Velázquez, pero mostrar todos si no se encuentra
+          // (esto hace el filtro más flexible ya que los nombres pueden variar en DriCloud)
           if (normalizedServiceChoice.includes('psicologia') && !normalizedServiceChoice.includes('fisioterapia')) {
-            const normalizedDoctor = normalizeName(fullName);
-            const normalizedFirstName = normalizeName(firstName);
-            const normalizedLastName = normalizeName(lastName);
-            
-            // Buscar "jasmina" en el nombre y "garcia" + "velazquez" en los apellidos
-            const hasJasmina = normalizedFirstName.includes('jasmina') || normalizedDoctor.includes('jasmina');
-            const hasGarcia = normalizedLastName.includes('garcia') || normalizedDoctor.includes('garcia');
-            const hasVelazquez = normalizedLastName.includes('velazquez') || normalizedDoctor.includes('velazquez');
-            
-            // Es Jasmina si tiene "jasmina" en el nombre Y (garcia O velazquez) en los apellidos
-            const isJasmina = hasJasmina && (hasGarcia || hasVelazquez);
-            
-            if (!isJasmina) {
-              console.log(`❌ Doctor filtrado para Psicología: "${fullName}" (ID: ${doctorId}) - no es Jasmina García Velázquez`);
-              console.log(`   - hasJasmina: ${hasJasmina}, hasGarcia: ${hasGarcia}, hasVelazquez: ${hasVelazquez}`);
-              return false;
-            } else {
-              console.log(`✅ Doctor permitido para Psicología: "${fullName}" (ID: ${doctorId}) - es Jasmina García Velázquez`);
-              return true;
-            }
+            // Por ahora, mostrar todos los doctores de Psicología que vengan de la API
+            // El filtro específico de Jasmina se puede reactivar si es necesario
+            console.log(`✅ Doctor permitido para Psicología: "${fullName}" (ID: ${doctorId}) - mostrando todos los doctores de la API`);
+            return true;
           }
           
           // Para Fisioterapia: mostrar todos los profesionales que devuelve la API (sin Jasmina)
