@@ -115,3 +115,5 @@ lsof -i :5173
 3. **Cuando estés listo**, ejecuta `npm run build` para generar el bundle de producción
 
 
+
+

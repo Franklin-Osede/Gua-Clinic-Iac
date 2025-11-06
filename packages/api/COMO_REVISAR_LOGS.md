@@ -218,3 +218,5 @@ Una vez que tengas la información, compártela conmigo y podré:
 2. Proponer una solución específica
 3. Implementar el fix necesario
 
+
+

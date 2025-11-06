@@ -44,3 +44,5 @@ export const DiagnosticTestsLogo: FC<DiagnosticTestsLogoProps> = ({ disabled }) 
 
 export default DiagnosticTestsLogo;
 
+
+

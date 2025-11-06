@@ -11,7 +11,7 @@ export class DoctorAvailabilityController {
   async getDoctorAgenda(
     @Param('doctorId') doctorId: string,
     @Param('startDate') startDate: string,
-    @Query('dates_to_fetch') datesToFetch: number = 31
+    @Query('dates_to_fetch') datesToFetch: number = 31 // Máximo permitido por DriCloud API v2.3
   ) {
     const doctorIdNum = parseInt(doctorId, 10);
     

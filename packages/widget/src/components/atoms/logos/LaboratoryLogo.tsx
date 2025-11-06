@@ -69,3 +69,5 @@ export const LaboratoryLogo: FC<LaboratoryLogoProps> = ({ disabled }) => {
 
 export default LaboratoryLogo;
 
+
+

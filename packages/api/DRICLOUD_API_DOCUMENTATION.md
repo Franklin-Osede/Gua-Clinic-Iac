@@ -508,3 +508,5 @@ POST https://apidricloud.dricloud.net/<URLClínica>/api/APIWeb/GetPacienteHistor
    - El backend debe transformar esto a un array `[{ doctor_id, name, surname, ... }]`
 
 
+
+

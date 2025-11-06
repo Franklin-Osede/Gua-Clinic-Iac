@@ -26,6 +26,40 @@ export const TimeButton: React.FC<TimeButtonProps> = ({
     onClick(id, fullDateName, fullDateString);
   };
 
+  // Colores de marca según requisitos:
+  // - Available slots: #EAC607 (yellow/gold)
+  // - Selected slot: #033B4A (dark teal) o #22AD5C (green) - usando #033B4A
+  // - Disabled: #EFEFEF (light gray)
+  const getButtonStyles = () => {
+    if (isDisabled) {
+      return {
+        backgroundColor: '#EFEFEF',
+        borderColor: '#DDDDDD',
+        color: '#9DABAF',
+        cursor: 'not-allowed',
+        opacity: 0.6,
+      };
+    }
+    
+    if (activeTime) {
+      return {
+        backgroundColor: '#033B4A', // Dark teal para seleccionado
+        borderColor: '#033B4A',
+        color: '#FFFFFF',
+        fontWeight: 700,
+        boxShadow: '0 4px 12px rgba(3, 59, 74, 0.3)',
+        transform: 'scale(1.05)',
+      };
+    }
+    
+    return {
+      backgroundColor: '#FFFFFF',
+      borderColor: '#EAC607', // Accent color para disponibles
+      color: '#242424',
+      fontWeight: 500,
+    };
+  };
+
   return (
     <button
       type="button"
@@ -36,31 +70,29 @@ export const TimeButton: React.FC<TimeButtonProps> = ({
       }}
       disabled={isDisabled}
       style={{
-        padding: '10px 18px',
+        padding: '12px 20px',
         borderRadius: '12px',
-        border: activeTime ? '2px solid #EAC607' : '2px solid #DDDDDD',
-        backgroundColor: activeTime ? '#EAC607' : '#FFFFFF',
-        color: activeTime ? '#242424' : '#242424',
-        fontWeight: activeTime ? 600 : 500,
+        border: '2px solid',
         fontSize: '14px',
         cursor: isDisabled ? 'not-allowed' : 'pointer',
-        transition: 'all 0.2s ease',
-        opacity: isDisabled ? 0.5 : 1,
-        boxShadow: activeTime ? '0 2px 8px rgba(234, 198, 7, 0.3)' : 'none',
-        transform: activeTime ? 'scale(1.05)' : 'scale(1)',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        outline: 'none',
+        ...getButtonStyles(),
       }}
       onMouseEnter={(e) => {
         if (!isDisabled && !activeTime) {
-          e.currentTarget.style.backgroundColor = '#FDF9E6';
+          e.currentTarget.style.backgroundColor = '#FDF9E6'; // Light yellow background
           e.currentTarget.style.borderColor = '#EAC607';
           e.currentTarget.style.transform = 'scale(1.05)';
+          e.currentTarget.style.boxShadow = '0 2px 8px rgba(234, 198, 7, 0.2)';
         }
       }}
       onMouseLeave={(e) => {
         if (!isDisabled && !activeTime) {
           e.currentTarget.style.backgroundColor = '#FFFFFF';
-          e.currentTarget.style.borderColor = '#DDDDDD';
+          e.currentTarget.style.borderColor = '#EAC607';
           e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.boxShadow = 'none';
         }
       }}
       className="font-medium"

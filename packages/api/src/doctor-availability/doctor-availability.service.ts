@@ -16,8 +16,10 @@ export class DoctorAvailabilityService {
       throw new Error(`Invalid startDate: ${startDate}. Expected format: yyyyMMdd or YYYY-MM-DD.`);
     }
     
-    if (datesToFetch <= 0 || datesToFetch > 365) {
-      throw new Error(`Invalid datesToFetch: ${datesToFetch}. Must be between 1 and 365.`);
+    // Según documentación DriCloud API v2.3: diasRecuperar acepta valores entre 1 y 31
+    // Para obtener más de 31 días, se deben hacer múltiples llamadas
+    if (datesToFetch <= 0 || datesToFetch > 31) {
+      throw new Error(`Invalid datesToFetch: ${datesToFetch}. Must be between 1 and 31 (DriCloud API limit). For 2 months, make multiple calls.`);
     }
     
     try {

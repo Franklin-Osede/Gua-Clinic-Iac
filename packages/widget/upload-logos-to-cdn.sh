@@ -54,3 +54,5 @@ echo ""
 echo "🔗 URLs disponibles en:"
 echo "   https://cdn.gua.com/logos/"
 
+
+

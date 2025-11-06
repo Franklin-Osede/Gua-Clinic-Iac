@@ -83,3 +83,5 @@ echo "  'https://ybymfv93yg.execute-api.eu-north-1.amazonaws.com/prod/doctor-ava
 echo "  -H 'accept: application/json'"
 echo ""
 
+
+

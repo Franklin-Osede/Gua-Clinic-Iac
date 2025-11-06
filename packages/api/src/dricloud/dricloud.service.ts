@@ -579,6 +579,20 @@ export class DriCloudService {
     }
   }
 
+  /**
+   * Obtiene la disponibilidad de agenda de un doctor desde DriCloud
+   * 
+   * @param doctorId ID del doctor
+   * @param startDate Fecha de inicio en formato yyyyMMdd o YYYY-MM-DD
+   * @param datesToFetch Número de días a recuperar (1-31, máximo permitido por DriCloud API v2.3)
+   * 
+   * @returns Respuesta con formato: { Successful: boolean, Data: { Disponibilidad: string[] } }
+   *          Donde Disponibilidad contiene strings en formato: "yyyyMMddHHmm:<MinCita>:<DES_ID>:<USU_ID>"
+   * 
+   * @note Para obtener 2 meses (60 días), se deben hacer múltiples llamadas:
+   *       - Primera llamada: startDate = hoy, datesToFetch = 31
+   *       - Segunda llamada: startDate = hoy + 31 días, datesToFetch = 31
+   */
   async getDoctorAgenda(doctorId: number, startDate: string, datesToFetch: number = 31) {
     // Validar parámetros
     if (!doctorId || doctorId <= 0) {

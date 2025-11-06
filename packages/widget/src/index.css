@@ -286,13 +286,29 @@ gua-widget .react-calendar__navigation__label {
   text-transform: uppercase !important;
   letter-spacing: 0.5px !important;
   cursor: pointer !important;
-  padding: 8px 12px !important;
+  padding: 0 !important;
   border-radius: 8px !important;
   transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative !important;
+}
+
+/* Permitir que el contenido del navigationLabel capture los clics */
+#gua-widget-container .react-calendar__navigation__label > div,
+gua-widget .react-calendar__navigation__label > div {
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 1 !important;
 }
 
 #gua-widget-container .react-calendar__navigation__label:hover,
 gua-widget .react-calendar__navigation__label:hover {
+  background-color: transparent !important;
+  color: #242424 !important;
+}
+
+/* El hover se maneja en el div interno */
+#gua-widget-container .react-calendar__navigation__label > div:hover,
+gua-widget .react-calendar__navigation__label > div:hover {
   background-color: rgba(234, 198, 7, 0.1) !important;
   color: #EAC607 !important;
 }
@@ -385,6 +401,24 @@ gua-widget .react-calendar__tile.available-date-selected {
   background-color: rgba(234, 198, 7, 0.12) !important;
   color: #242424 !important;
   opacity: 0.8 !important;
+}
+
+/* Fecha futura seleccionable sin disponibilidad - Estilo más sutil */
+#gua-widget-container .react-calendar__tile.selectable-date,
+gua-widget .react-calendar__tile.selectable-date {
+  background-color: rgba(157, 171, 175, 0.05) !important;
+  color: #9DABAF !important;
+  font-weight: 400 !important;
+  border: 1px dashed rgba(157, 171, 175, 0.2) !important;
+  cursor: pointer !important;
+}
+
+/* Fecha futura seleccionable sin disponibilidad (hover) */
+#gua-widget-container .react-calendar__tile.selectable-date:hover,
+gua-widget .react-calendar__tile.selectable-date:hover {
+  background-color: rgba(157, 171, 175, 0.1) !important;
+  border-color: rgba(157, 171, 175, 0.4) !important;
+  transform: scale(1.05) !important;
 }
 
 /* Fecha seleccionada - Destacada */
@@ -482,4 +516,31 @@ gua-widget .flex.flex-wrap::-webkit-scrollbar-thumb {
 #gua-widget-container .flex.flex-wrap::-webkit-scrollbar-thumb:hover,
 gua-widget .flex.flex-wrap::-webkit-scrollbar-thumb:hover {
   background: #D4B706 !important;
+}
+
+/* ============================================
+   ANIMACIONES PARA DROPDOWN DE MES/AÑO
+   ============================================ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Asegurar que el dropdown del selector de mes/año tenga z-index alto */
+#gua-widget-container .react-calendar__navigation__label > div[style*="z-index"],
+gua-widget .react-calendar__navigation__label > div[style*="z-index"] {
+  z-index: 10000 !important;
+}
+
+/* Ocultar el header nativo de react-calendar ya que usamos nuestro propio header personalizado */
+#gua-widget-container .react-calendar__navigation,
+gua-widget .react-calendar__navigation {
+  display: none !important;
 }

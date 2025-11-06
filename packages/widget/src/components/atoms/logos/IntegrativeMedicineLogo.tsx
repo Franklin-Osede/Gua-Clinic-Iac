@@ -55,3 +55,5 @@ export const IntegrativeMedicineLogo: FC<IntegrativeMedicineLogoProps> = ({ disa
 
 export default IntegrativeMedicineLogo;
 
+
+

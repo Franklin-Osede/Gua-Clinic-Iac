@@ -158,3 +158,5 @@ Widget: Polling hasta confirmación
 - **Tracking:** Cada cita tiene un trackingId interno para seguimiento
 
 
+
+
