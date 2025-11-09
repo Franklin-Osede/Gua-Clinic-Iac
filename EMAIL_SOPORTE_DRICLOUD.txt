@@ -1,0 +1,35 @@
+Hola,
+
+Somos el Gabinete de Urología y Andrología (CLI_ID: 19748, URL: Dricloud_gabinetedeurologiayandrologia_19748592). Estamos integrando la API de DriCloud v2.3 para sincronizar el calendario de citas en nuestro sistema web.
+
+Hemos logrado conectar correctamente con la mayoría de endpoints (GetEspecialidades, GetDoctores, GetClinicas, etc.), pero tenemos problemas específicos con GetAgendaDisponibilidad.
+
+**Problema:**
+El endpoint GetAgendaDisponibilidad no devuelve datos de disponibilidad, aunque el resto de la integración funciona correctamente. Estamos enviando los parámetros según la documentación:
+- USU_ID (id del doctor)
+- fecha (formato yyyyMMdd)
+- diasRecuperar (valores entre 1 y 31)
+
+La respuesta que recibimos es exitosa (Successful: true) pero el array Disponibilidad viene vacío.
+
+**Experiencias hasta ahora:**
+- El login funciona correctamente y obtenemos el USU_APITOKEN sin problemas
+- GetEspecialidades devuelve todas las especialidades correctamente
+- GetDoctores devuelve los doctores asociados a cada especialidad
+- GetClinicas y GetDespachos funcionan correctamente
+- Solo GetAgendaDisponibilidad devuelve array vacío
+
+**Verificaciones realizadas:**
+- Hemos consultado con otros desarrolladores (voice agents) que usan la misma API y confirman que solo envían USU_ID, fecha y diasRecuperar (y opcionalmente TCI_ID)
+- Estamos usando exactamente los mismos parámetros que otros desarrolladores que sí obtienen resultados
+- Sabemos que todos los doctores tienen disponibilidad configurada porque estos otros desarrolladores obtienen resultados correctamente con los mismos doctores y fechas que nosotros estamos probando
+
+**Preguntas:**
+1. ¿Hay alguna configuración específica en DriCloud que debamos verificar para que GetAgendaDisponibilidad devuelva datos?
+2. ¿Puede haber alguna restricción o configuración específica por cuenta/clínica que esté afectando nuestra integración?
+3. ¿Hay algún paso de configuración que debamos completar antes de poder obtener disponibilidad?
+
+Cualquier orientación sobre cómo sincronizar correctamente el calendario sería de gran ayuda.
+
+Gracias de antemano.
+

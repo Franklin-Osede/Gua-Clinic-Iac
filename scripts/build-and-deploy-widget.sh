@@ -97,7 +97,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo -e "${YELLOW}📦 Creando ZIP del plugin...${NC}"
     cd "$PLUGIN_DIR"
     
-    VERSION="v1.0.6"
+    VERSION="v1.0.7"
     ZIP_FILE=~/Desktop/gua-clinic-widget-FINAL-${VERSION}.zip
     
     # Crear ZIP con todos los archivos necesarios
@@ -130,5 +130,6 @@ echo "   1. Sube el ZIP a tu sitio WordPress"
 echo "   2. Activa el plugin"
 echo "   3. Usa el shortcode: [gua_clinic_widget]"
 echo ""
+
 
 

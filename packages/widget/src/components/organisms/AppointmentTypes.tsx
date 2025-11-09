@@ -49,7 +49,6 @@ const AppointmentTypes: React.FC<AppointmentTypesProps> = ({
 
   const fetchTypesAndUpdateOptions = useCallback(async () => {
     try {
-      console.log('📋 AppointmentTypes: Iniciando carga para serviceId:', serviceId);
       const updatedOptions: AppointmentOption[] = (
         await Promise.all(
           appointmentsOptions.map(async (option) => {
@@ -57,62 +56,24 @@ const AppointmentTypes: React.FC<AppointmentTypesProps> = ({
               option.logoType === "revision-physical"
                 ? option.logoType.split("-")[0]
                 : option.logoType;
-            console.log(`📋 Buscando tipo de cita: ${logoType} para serviceId: ${serviceId}`);
-            
-            try {
-              const data = await getAppointmentTypes(serviceId, logoType);
-              console.log(`📋 Datos recibidos para ${logoType}:`, data);
+            const data = await getAppointmentTypes(serviceId, logoType);
 
-              if (!data || !data.length) {
-                console.warn(`⚠️ No hay datos para ${logoType}, usando valores por defecto`);
-                // Si no hay datos, mantener la opción con valores por defecto
-                return {
-                  ...option,
-                  extra: {
-                    id: null,
-                    price: 0,
-                    duration: 0,
-                  },
-                };
-              }
+            if (!data.length) return null;
 
-              return {
-                ...option,
-                extra: {
-                  id: data[0]?.id ?? null,
-                  price: data[0]?.private_price ?? 0,
-                  duration: data[0]?.duration_minutes ?? 0,
-                },
-              };
-            } catch (error) {
-              console.error(`❌ Error obteniendo tipo de cita ${logoType}:`, error);
-              // En caso de error, mantener la opción con valores por defecto
-              return {
-                ...option,
-                extra: {
-                  id: null,
-                  price: 0,
-                  duration: 0,
-                },
-              };
-            }
+            return {
+              ...option,
+              extra: {
+                id: data[0]?.id ?? null,
+                price: data[0]?.private_price ?? 0,
+                duration: data[0]?.duration_minutes ?? 0,
+              },
+            };
           }),
         )
       ).filter((option): option is AppointmentOption => option !== null);
-      
-      console.log('📋 Opciones finales:', updatedOptions);
       setFinalOptions(updatedOptions);
     } catch (error) {
-      console.error("❌ Error fetching appointment types:", error);
-      // En caso de error general, mostrar opciones por defecto
-      setFinalOptions(appointmentsOptions.map(option => ({
-        ...option,
-        extra: {
-          id: null,
-          price: 0,
-          duration: 0,
-        },
-      })));
+      console.error("Error fetching appointment types:", error);
     } finally {
       setIsLoading(false);
     }
@@ -125,30 +86,12 @@ const AppointmentTypes: React.FC<AppointmentTypesProps> = ({
   }, [fetchTypesAndUpdateOptions, isLoading]);
 
   return (
-    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-      <div className="flex flex-col items-center w-full justify-center my-8" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 16px', marginTop: '40px', marginBottom: '48px' }}>
-        <div style={{
-          fontSize: '14px',
-          fontWeight: 500,
-          color: '#9DABAF',
-          textAlign: 'center',
-          marginBottom: '12px',
-          letterSpacing: '0.3px',
-          lineHeight: '1.5'
-        }}>
+    <div className="flex items-center justify-center w-full flex-col">
+      <div className="flex flex-col 2xl:items-center md:items-center items-start w-full justify-center my-8">
+        <h3 className="text-primary-400 text-center 2xl:text-lg">
           {serviceChoice}
-        </div>
-        <h1 className="text-center" style={{
-          fontSize: '22px',
-          fontWeight: 600,
-          color: '#242424',
-          textAlign: 'center',
-          margin: '0',
-          letterSpacing: '-0.2px',
-          lineHeight: '1.3'
-        }}>
-          Elige cómo será tu cita
-        </h1>
+        </h3>
+        <h1>Elige cómo será tu cita</h1>
       </div>
       {isLoading && (
         <div className="flex justify-center items-center col-span-2 mt-8">
@@ -156,18 +99,8 @@ const AppointmentTypes: React.FC<AppointmentTypesProps> = ({
         </div>
       )}
       {!isLoading && (
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', maxWidth: '400px', margin: '0 auto' }}>
-          <div 
-            className="flex flex-col 2xl:gap-6 md:gap-6 gap-4 items-center justify-center"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-            }}
-          >
+        <div>
+          <div className="flex flex-col 2xl:gap-6 md:gap-6 gap-4 items-center justify-center">
             {finalOptions.map((appt, index) => (
               <AppointmentCardOption
                 id={index}
@@ -177,7 +110,7 @@ const AppointmentTypes: React.FC<AppointmentTypesProps> = ({
                 logoType={appt.logoType}
                 isActive={activeAppointmentId === index}
                 onAppointmentTypeClick={onCardClick}
-                isDisabled={false}
+                isDisabled={appointmentClicked}
                 info={appt.extra}
               />
             ))}

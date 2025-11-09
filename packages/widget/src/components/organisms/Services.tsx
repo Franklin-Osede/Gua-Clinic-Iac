@@ -20,9 +20,9 @@ const Services: React.FC<ServicePageProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const fetchServices = async () => {
+    const fetchServices = async (forceRefresh: boolean = false) => {
       try {
-        const data = await getMedicalSpecialties();
+        const data = await getMedicalSpecialties(forceRefresh);
         
         // Especialidades a excluir
         const excludedSpecialties = [
@@ -53,6 +53,23 @@ const Services: React.FC<ServicePageProps> = ({
           }));
         
         console.log('✅ Especialidades filtradas:', formattedOptions);
+        
+        // Si solo hay 2 especialidades o menos, puede ser un problema de caché
+        // (especialmente si son "Consultas generales" y "Emergencias")
+        if (formattedOptions.length <= 2 && !forceRefresh) {
+          const names = formattedOptions.map(s => s.name.toLowerCase());
+          const suspiciousNames = ['consulta general', 'emergencia', 'consultas generales', 'emergencias'];
+          const isSuspicious = names.some(name => 
+            suspiciousNames.some(suspicious => name.includes(suspicious))
+          );
+          
+          if (isSuspicious) {
+            console.warn('⚠️ Solo se encontraron 2 especialidades sospechosas. Forzando recarga desde DriCloud...');
+            // Recargar con refresh forzado
+            return fetchServices(true);
+          }
+        }
+        
         setServiceOptions(formattedOptions);
       } catch (error) {
         console.error("Error fetching medical specialties:", error);

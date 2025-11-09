@@ -7,7 +7,7 @@ import AppointmentTypes from "../components/organisms/AppointmentTypes.tsx";
 import PatientRegistrationForm from "../components/organisms/PatientRegistrationForm.tsx";
 import AdditionalInformationForm from "../components/organisms/AdditionalInformationForm.tsx";
 import AppointmentConfirmed from "../components/organisms/AppointmentConfirmed.tsx";
-import { createAppointment, createPatient, pollAppointmentStatus, getDoctors } from "../services/GuaAPIService.ts";
+import { createAppointment, createPatient } from "../services/GuaAPIService.ts";
 import { formatAppointmentData, formatPatientData } from "@gua/shared";
 import IdentificationPatient from "../components/organisms/IdentificationPatient.tsx";
 import PatientVATForm from "../components/organisms/PatientVATForm.tsx";
@@ -59,9 +59,8 @@ const LAST_PAGE_INDEX = 9;
 const VIRTUAL_DOCTOR_ID = 5;
 
 const MainPage: React.FC = () => {
-  // Los botones siempre están visibles (excepto en última página)
-  const [showNextButton, setShowNextButton] = useState(true);
-  const [showPreviousButton, setShowPreviousButton] = useState(true);
+  const [showNextButton, setShowNextButton] = useState(false);
+  const [showPreviousButton, setShowPreviousButton] = useState(false);
   const [disableNextButton, setDisableNextButton] = useState(false);
   const [disablePreviousButton, setDisablePreviousButton] = useState(false);
   const [showNoOptionError, setShowNoOptionError] = useState(false);
@@ -84,48 +83,19 @@ const MainPage: React.FC = () => {
   const [showPatientError, setShowPatientError] = useState(false);
   const [isLoadingAppointment, setIsLoadingAppointment] = useState(false);
   const [showAppointmentError, setShowAppointmentError] = useState(false);
-  const [appointmentStatus, setAppointmentStatus] = useState<'processing' | 'confirmed' | 'failed' | null>(null);
-  const [calendarRefreshKey, setCalendarRefreshKey] = useState<number>(0); // Clave para refrescar calendario
 
   const handleCardClick = (
     activeId: number | null,
     name?: string,
     extra?: number | null | AppointmentInfo | string,
   ) => {
-    console.log('🖱️ Card clicked:', { activeId, name, extra, currentPage: pageState.currentPage });
-    
-    // Si activeId es null, significa que se deseleccionó - ocultar botones
-    // Si activeId no es null, significa que se seleccionó - mostrar botones
-    const shouldShowButtons = activeId !== null;
-    setShowNextButton(shouldShowButtons);
-    setShowPreviousButton(shouldShowButtons);
+    setShowNextButton(true);
+    setShowPreviousButton(true);
     setShowNoOptionError(false);
-    
     setPageState((prev) => {
-      const currentPage = prev.pages[prev.currentPage];
-      
-      // Si se está deseleccionando (activeId es null), limpiar todo
-      if (activeId === null) {
-        const updatedPage = {
-          activeId: null,
-          isClicked: false,
-          name: "",
-          extra: null,
-        };
-        
-        return {
-          ...prev,
-          pages: {
-            ...prev.pages,
-            [prev.currentPage]: updatedPage,
-          },
-        };
-      }
-      
-      // Si se está seleccionando, actualizar con los datos
       const updatedPage = {
         activeId: activeId,
-        isClicked: true,
+        isClicked: name ? name.length > 0 && activeId !== null : true,
         ...(name && { name }),
         ...(extra && { extra }),
       };
@@ -257,7 +227,6 @@ const MainPage: React.FC = () => {
   const handleAppointmentCreation = async () => {
     try {
       setIsLoadingAppointment(true);
-      setAppointmentStatus('processing');
 
       const doctorId =
         import.meta.env.VITE_IS_PROD === "true"
@@ -291,47 +260,12 @@ const MainPage: React.FC = () => {
         observations,
       );
 
-      // Crear cita y obtener trackingId
-      const appointmentResponse = await createAppointment(data);
-      const trackingId = appointmentResponse.trackingId;
+      await createAppointment(data);
 
-      if (!trackingId) {
-        throw new Error('No se recibió trackingId de la respuesta');
-      }
-
-      // Hacer polling del estado hasta confirmación
-      const pollResult = await pollAppointmentStatus(
-        trackingId,
-        (status) => {
-          // Actualizar estado mientras se procesa
-          setAppointmentStatus(status as 'processing' | 'confirmed' | 'failed');
-        },
-        15, // 15 intentos = 30 segundos máximo
-        2000 // 2 segundos entre intentos
-      );
-
-      if (pollResult.confirmed) {
-        setAppointmentStatus('confirmed');
-        setShowAppointmentError(false);
-        
-        // Actualizar refreshKey para forzar actualización del calendario
-        // Esto hará que el calendario recargue la disponibilidad y oculte la hora reservada
-        setCalendarRefreshKey(prev => prev + 1);
-        console.log('✅ Cita confirmada, refrescando calendario...');
-        
-        return true;
-      } else {
-        // Si falló o hubo timeout
-        setAppointmentStatus('failed');
-        setShowAppointmentError(true);
-        setDisableNextButton(true);
-        setDisablePreviousButton(true);
-        console.error('Error al confirmar cita:', pollResult.errorMessage);
-        return false;
-      }
+      setShowAppointmentError(false);
+      return true;
     } catch (error) {
       console.error("Error creating appointment:", error);
-      setAppointmentStatus('failed');
       setShowAppointmentError(true);
       setDisableNextButton(true);
       setDisablePreviousButton(true);
@@ -362,97 +296,6 @@ const MainPage: React.FC = () => {
     setPageState((prev) => {
       let nextPage = prev.currentPage + 1;
       const pages = prev.pages;
-
-      // Si es Laboratorio/Pruebas Diagnosticas, saltar página de profesionales
-      const specialtyName = pages[SPECIALTIES_PAGE_INDEX]?.name?.toLowerCase() || '';
-      const isLaboratory = specialtyName.includes('laboratorio') || 
-                          specialtyName.includes('pruebas diagnosticas') ||
-                          specialtyName.includes('29.');
-      
-      if (isLaboratory && nextPage === DOCTOR_PAGE_INDEX) {
-        console.log('🏥 Saltando página de profesionales para Laboratorio');
-        // Para Laboratorio, necesitamos obtener el doctor_id real desde la API
-        const serviceId = Number(pages[SPECIALTIES_PAGE_INDEX].extra) || 0;
-        console.log('🏥 ServiceId para Laboratorio:', serviceId);
-        
-        // Obtener doctores de Laboratorio de forma asíncrona
-        getDoctors(serviceId).then((doctors) => {
-            console.log('🏥 Doctores de Laboratorio obtenidos:', doctors);
-            if (doctors && doctors.length > 0) {
-              // Usar el primer doctor disponible
-              const laboratoryDoctorId = doctors[0].doctor_id || doctors[0].USU_ID || doctors[0].id || 0;
-              console.log('🏥 Usando doctor_id de Laboratorio:', laboratoryDoctorId);
-              
-              setPageState((current) => {
-                const updatedPages = { ...current.pages };
-                updatedPages[DOCTOR_PAGE_INDEX] = {
-                  ...updatedPages[DOCTOR_PAGE_INDEX],
-                  activeId: 0,
-                  isClicked: true,
-                  extra: laboratoryDoctorId,
-                  name: 'Laboratorio',
-                };
-                return {
-                  ...current,
-                  pages: updatedPages,
-                };
-              });
-            } else {
-              console.error('❌ No se encontraron doctores para Laboratorio');
-              // Si no hay doctores, mantener el serviceId como fallback
-              setPageState((current) => {
-                const updatedPages = { ...current.pages };
-                updatedPages[DOCTOR_PAGE_INDEX] = {
-                  ...updatedPages[DOCTOR_PAGE_INDEX],
-                  activeId: 0,
-                  isClicked: true,
-                  extra: serviceId, // Fallback temporal
-                  name: 'Laboratorio',
-                };
-                return {
-                  ...current,
-                  pages: updatedPages,
-                };
-              });
-            }
-        }).catch((error) => {
-            console.error('❌ Error obteniendo doctores de Laboratorio:', error);
-            // En caso de error, usar serviceId como fallback
-            setPageState((current) => {
-              const updatedPages = { ...current.pages };
-              updatedPages[DOCTOR_PAGE_INDEX] = {
-                ...updatedPages[DOCTOR_PAGE_INDEX],
-                activeId: 0,
-                isClicked: true,
-                extra: serviceId, // Fallback temporal
-                name: 'Laboratorio',
-              };
-              return {
-                ...current,
-                pages: updatedPages,
-              };
-            });
-          });
-        
-        // Configurar página de profesionales con datos temporales
-        const updatedPages = { ...prev.pages };
-        updatedPages[DOCTOR_PAGE_INDEX] = {
-          ...updatedPages[DOCTOR_PAGE_INDEX],
-          activeId: 0,
-          isClicked: true,
-          extra: serviceId, // Temporal hasta que se obtenga el doctor_id real
-          name: 'Laboratorio',
-        };
-        
-        // Saltar página 2 (Professionals) pero NO saltar página 3 (AppointmentTypes)
-        // Ir a página 3 (AppointmentTypes) normalmente
-        console.log('🏥 Saltando página 2 (Professionals), yendo a página 3 (AppointmentTypes)');
-        return {
-          ...prev,
-          pages: updatedPages,
-          currentPage: nextPage + 1, // Saltar página 2, ir a página 3 (AppointmentTypes)
-        };
-      }
 
       if (
         pages[DOCTOR_PAGE_INDEX]?.extra !== VIRTUAL_DOCTOR_ID &&
@@ -494,22 +337,6 @@ const MainPage: React.FC = () => {
     setPageState((prev) => {
       let previousPage = prev.currentPage - 1;
       const pages = prev.pages;
-
-      // Si es Laboratorio y estamos volviendo, saltar página de profesionales
-      const specialtyName = pages[SPECIALTIES_PAGE_INDEX]?.name?.toLowerCase() || '';
-      const isLaboratory = specialtyName.includes('laboratorio') || 
-                          specialtyName.includes('pruebas diagnosticas') ||
-                          specialtyName.includes('29.');
-      
-      if (isLaboratory && previousPage === DOCTOR_PAGE_INDEX) {
-        console.log('🏥 Volviendo, saltando página de profesionales (página 2)');
-        previousPage = DOCTOR_PAGE_INDEX - 1; // Volver a página 1 (MedicalAppointmentTypes)
-      }
-      
-      if (isLaboratory && previousPage === DATE_TIME_PAGE_INDEX) {
-        console.log('🏥 Volviendo desde calendario, saltando página de profesionales');
-        previousPage = VIRTUAL_PAGE_INDEX; // Volver a página 3 (AppointmentTypes)
-      }
 
       if (
         pages[DOCTOR_PAGE_INDEX]?.extra !== VIRTUAL_DOCTOR_ID &&
@@ -567,7 +394,7 @@ const MainPage: React.FC = () => {
         return (
           <Services
             activeCardId={page.activeId}
-            initialCard={true}
+            initialCard={!page.isClicked}
             onCardClick={handleCardClick}
           />
         );
@@ -609,32 +436,14 @@ const MainPage: React.FC = () => {
           />
         );
       case 4:
-        const doctorPageExtra = pageState.pages[DOCTOR_PAGE_INDEX].extra;
-        let doctorId = 0;
-        
-        if (doctorPageExtra !== null && doctorPageExtra !== undefined) {
-          if (typeof doctorPageExtra === 'number') {
-            doctorId = doctorPageExtra;
-          } else {
-            const parsed = Number(doctorPageExtra);
-            doctorId = isNaN(parsed) ? 0 : parsed;
-          }
-        }
-        
-        if (doctorId === 0) {
-          console.warn('⚠️ MainPage: doctorId es 0 o inválido, extra value:', doctorPageExtra);
-        }
-        
         return (
           <CalendarDatePicker
-            key={`calendar-${pageState.currentPage}-${doctorId}`}
             activeTimeId={page.activeId}
             isDisabled={page.isClicked}
             serviceChoice={pageState.pages[SPECIALTIES_PAGE_INDEX].name ?? ""}
             onDateTimeChosen={handleCardClick}
             activeDate={String(page.extra) ?? ""}
-            doctorId={doctorId}
-            refreshKey={calendarRefreshKey}
+            doctorId={Number(pageState.pages[DOCTOR_PAGE_INDEX].extra)}
           />
         );
       case 5:
@@ -674,7 +483,6 @@ const MainPage: React.FC = () => {
             showError={showNoOptionError}
             showCreationError={showAppointmentError}
             loading={isLoadingAppointment}
-            processingStatus={appointmentStatus}
           />
         );
       case 9:
@@ -743,9 +551,6 @@ const MainPage: React.FC = () => {
     const shouldDisablePreviousButton =
       pageState.currentPage === 0 && !currentPage.isClicked;
     setDisablePreviousButton(shouldDisablePreviousButton);
-
-    // Los botones siempre están visibles - solo se deshabilitan según el estado
-    // No necesitamos cambiar showNextButton/showPreviousButton aquí
   }, [pageState.pages, pageState.currentPage]);
 
   const resetPageInfo = (pageIndexToReset: number) => {
@@ -768,52 +573,26 @@ const MainPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start" style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start' }}>
-      <div className="flex-grow flex items-start justify-center" style={{ width: '100%', flex: '1 1 auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+    <div className="min-h-screen flex flex-col items-center justify-start">
+      <div className="flex-grow flex items-start justify-center">
         {allPages[pageState.currentPage].component}
       </div>
 
-      {/* Contenedor de botones - siempre visible si no es la última página */}
-      {(pageState.currentPage !== LAST_PAGE_INDEX) && (
       <div
-        className="flex items-center justify-center w-full"
-        style={{
-          width: '100%',
-          display: 'flex',
-          minHeight: '100px',
-          marginTop: '32px',
-          marginBottom: '32px',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '16px',
-          boxSizing: 'border-box',
-          position: 'relative',
-          zIndex: 10,
-        }}
+        className={`flex items-center justify-center ${
+          pageState.currentPage === LAST_PAGE_INDEX
+            ? "h-0"
+            : "2xl:h-40 md:h-40 h-20 mt-2"
+        }`}
       >
-        <div className="flex 2xl:flex-col md:flex-col flex-row-reverse gap-4" style={{ display: 'flex', gap: '16px', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', width: '100%', maxWidth: '400px', margin: '0 auto' }}>
-          {/* Botón SIGUIENTE - siempre visible (excepto en última página) */}
-          {showNextButton && (
+        <div className="flex 2xl:flex-col md:flex-col flex-row-reverse items-center justify-center" style={{ gap: '16px' }}>
+          {showNextButton && pageState.currentPage !== LAST_PAGE_INDEX && (
             <button
               className={`${
                 disableNextButton
                   ? "bg-disabled cursor-default"
                   : "bg-accent-300 hover:brightness-95"
               } min-w-min w-32 2xl:text-xs md:text-xs text-[0.6rem] py-4 2xl:px-8 md:px-8 px-4 text-white`}
-              style={{
-                backgroundColor: disableNextButton ? '#EFEFEF' : '#EAC607',
-                color: '#FFFFFF',
-                minWidth: '128px',
-                width: '128px',
-                padding: '16px 32px',
-                fontSize: '0.6rem',
-                fontWeight: '500',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: disableNextButton ? 'default' : 'pointer',
-                opacity: disableNextButton ? 0.5 : 1,
-                transition: 'all 0.2s',
-              }}
               onClick={() => {
                 if (!disableNextButton) {
                   handleNext().then();
@@ -825,29 +604,13 @@ const MainPage: React.FC = () => {
               SIGUIENTE
             </button>
           )}
-          {/* Botón VOLVER - siempre visible (excepto en primera página y última página) */}
           {showPreviousButton &&
             pageState.currentPage !== ADDITIONAL_INFO_FORM_INDEX &&
-            pageState.currentPage !== LAST_PAGE_INDEX &&
-            pageState.currentPage > 0 && (
+            pageState.currentPage !== LAST_PAGE_INDEX && (
               <button
                 className={`${
                   disablePreviousButton ? "cursor-default" : "hover:opacity-50"
                 } min-w-min w-32 2xl:text-xs md:text-xs text-[0.6rem] bg-white text-primary-400 py-4 2xl:px-8 md:px-8 px-4 2xl:mt-2 md:mt-2`}
-                style={{
-                  backgroundColor: '#FFFFFF',
-                  color: '#242424',
-                  minWidth: '128px',
-                  width: '128px',
-                  padding: '16px 32px',
-                  fontSize: '0.6rem',
-                  fontWeight: '500',
-                  border: '1px solid #DDDDDD',
-                  borderRadius: '8px',
-                  cursor: disablePreviousButton ? 'default' : 'pointer',
-                  opacity: disablePreviousButton ? 0.5 : 1,
-                  transition: 'all 0.2s',
-                }}
                 onClick={() => {
                   if (!disablePreviousButton) {
                     handleReset();
@@ -856,10 +619,9 @@ const MainPage: React.FC = () => {
               >
                 VOLVER
               </button>
-          )}
+            )}
         </div>
       </div>
-      )}
     </div>
   );
 };

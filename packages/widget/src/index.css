@@ -6,53 +6,6 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
-/* ⚠️ FORZAR: Todos los estilos de Tailwind dentro del widget */
-#gua-widget-container *,
-gua-widget * {
-  box-sizing: border-box !important;
-}
-
-/* ⚠️ FORZAR: Grid y layout classes para WordPress */
-#gua-widget-container .grid,
-gua-widget .grid {
-  display: grid !important;
-}
-
-#gua-widget-container .flex,
-gua-widget .flex {
-  display: flex !important;
-}
-
-#gua-widget-container .grid-cols-2 {
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-}
-
-#gua-widget-container .gap-4 {
-  gap: 1rem !important;
-}
-
-#gua-widget-container .gap-6 {
-  gap: 1.5rem !important;
-}
-
-@media (min-width: 768px) {
-  #gua-widget-container[class*="md:grid-cols-3"],
-  gua-widget[class*="md:grid-cols-3"] {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  }
-}
-
-@media (min-width: 1536px) {
-  #gua-widget-container[class*="2xl:grid-cols-3"],
-  gua-widget[class*="2xl:grid-cols-3"] {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  }
-  #gua-widget-container[class*="2xl:gap-6"],
-  gua-widget[class*="2xl:gap-6"] {
-    gap: 1.5rem !important;
-  }
-}
-
 @font-face {
   font-family: "Work Sans";
   src: url("../fonts/WorkSans-Regular.ttf") format("opentype");
@@ -93,454 +46,146 @@ gua-widget .flex {
   font-display: swap;
 }
 
-/* ⚠️ SCOPE: Todos los estilos scoped al widget para evitar conflictos con WordPress */
-/* También incluir #root para desarrollo local */
-#root,
-#gua-widget-container,
-gua-widget {
-  font-family: "Work Sans", sans-serif !important;
-  color: #242424 !important;
-  box-sizing: border-box !important;
+body {
+  font-family: "Work Sans", sans-serif;
+  color: #242424;
 }
 
-/* Aplicar estilos de Tailwind también a #root en desarrollo */
-#root * {
-  box-sizing: border-box !important;
+h1 {
+  font-size: 18px;
 }
 
-#root .flex {
-  display: flex !important;
+h2 {
+  font-size: 16px;
 }
 
-#root .grid {
-  display: grid !important;
+h3 {
+  font-size: 12px;
 }
 
-#gua-widget-container h1,
-gua-widget h1 {
-  font-size: 18px !important;
-}
-
-#gua-widget-container h2,
-gua-widget h2 {
-  font-size: 16px !important;
-}
-
-#gua-widget-container h3,
-gua-widget h3 {
-  font-size: 12px !important;
-}
-
-#gua-widget-container p,
-gua-widget p {
+p {
   font-size: 10px !important;
 }
 
-#gua-widget-container ul,
-gua-widget ul {
+ul {
   font-size: 10px !important;
 }
 
 @media (min-width: 768px) {
-  #gua-widget-container h1,
-  gua-widget h1 {
-    font-size: 2.5vw !important;
+  h1 {
+    font-size: 2.5vw;
   }
 
-  #gua-widget-container h2,
-  gua-widget h2 {
-    font-size: 2vw !important;
+  h2 {
+    font-size: 2vw;
   }
 
-  #gua-widget-container h3,
-  gua-widget h3 {
-    font-size: 1.5vw !important;
+  h3 {
+    font-size: 1.5vw;
   }
 
-  #gua-widget-container p,
-  gua-widget p {
-    font-size: 1.25vw !important;
+  p {
+    font-size: 1.25vw;
   }
 
-  #gua-widget-container ul,
-  gua-widget ul {
-    font-size: 1vw !important;
+  ul {
+    font-size: 1vw;
   }
 }
 
 @media (min-width: 1024px) {
-  #gua-widget-container h1,
-  gua-widget h1 {
-    font-size: 1.5vw !important;
+  h1 {
+    font-size: 1.5vw;
   }
 
-  #gua-widget-container h2,
-  gua-widget h2 {
-    font-size: 1vw !important;
+  h2 {
+    font-size: 1vw;
   }
 
-  #gua-widget-container h3,
-  gua-widget h3 {
-    font-size: 0.85vw !important;
+  h3 {
+    font-size: 0.85vw;
   }
 
-  #gua-widget-container p,
-  gua-widget p {
+  p {
     font-size: 0.75vw !important;
   }
 
-  #gua-widget-container ul,
-  gua-widget ul {
+  ul {
     font-size: 0.75vw !important;
   }
 }
 
-/* ============================================
-   MODERN CALENDAR PICKER - DISEÑO PROFESIONAL
-   ============================================ */
-
-#gua-widget-container .react-calendar,
-gua-widget .react-calendar {
-  width: 100% !important;
-  max-width: 420px !important;
-  background: #FFFFFF !important;
-  border-radius: 16px !important;
-  font-family: "Work Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
-  padding: 0 !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-  border: none !important;
-  overflow: hidden !important;
+.react-calendar {
+  width: 100%;
+  max-width: 325px;
+  background: #efefef;
+  border-radius: 24px;
+  font-family: "Work Sans", serif;
+  padding: 1.5rem;
 }
 
 @media (min-width: 1536px) {
-  #gua-widget-container .react-calendar,
-  gua-widget .react-calendar {
-    max-width: 400px !important;
-    padding: 28px 24px !important;
+  .react-calendar {
+    max-width: 325px;
   }
 }
 
 @media (max-width: 450px) {
-  #gua-widget-container .react-calendar,
-  gua-widget .react-calendar {
-    max-width: 100% !important;
-    padding: 20px 16px !important;
-    border-radius: 16px !important;
+  .react-calendar {
+    max-width: 325px;
+    padding: 1rem;
+    border-radius: 16px;
+    font-size: 12px;
+  }
+
+  .react-calendar__tile {
+    width: 2rem;
+    height: 2rem;
+    padding: 0.1rem;
   }
 }
 
-/* Navegación del calendario - Header moderno */
-#gua-widget-container .react-calendar__navigation,
-gua-widget .react-calendar__navigation {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  padding: 24px 28px !important;
-  margin-bottom: 0 !important;
-  background: linear-gradient(135deg, #F9FAFA 0%, #FFFFFF 100%) !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+.react-calendar__navigation {
+  padding: 0.5rem;
 }
 
-#gua-widget-container .react-calendar__navigation button,
-gua-widget .react-calendar__navigation button {
-  color: #242424 !important;
-  font-size: 18px !important;
-  font-weight: 600 !important;
-  min-width: 36px !important;
-  height: 36px !important;
-  border-radius: 8px !important;
-  background: transparent !important;
-  border: none !important;
-  cursor: pointer !important;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  color: #9DABAF !important;
-}
-
-#gua-widget-container .react-calendar__navigation button:hover,
-gua-widget .react-calendar__navigation button:hover {
-  background-color: rgba(234, 198, 7, 0.1) !important;
-  color: #EAC607 !important;
-  transform: scale(1.05) !important;
-}
-
-#gua-widget-container .react-calendar__navigation button:active,
-gua-widget .react-calendar__navigation button:active {
-  transform: scale(0.95) !important;
-}
-
-#gua-widget-container .react-calendar__navigation button:disabled,
-gua-widget .react-calendar__navigation button:disabled {
-  opacity: 0.3 !important;
-  cursor: not-allowed !important;
-}
-
-#gua-widget-container .react-calendar__navigation__label,
-gua-widget .react-calendar__navigation__label {
-  pointer-events: auto !important;
-  font-size: 16px !important;
-  font-weight: 700 !important;
-  color: #242424 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.5px !important;
-  cursor: pointer !important;
-  padding: 0 !important;
-  border-radius: 8px !important;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  position: relative !important;
-}
-
-/* Permitir que el contenido del navigationLabel capture los clics */
-#gua-widget-container .react-calendar__navigation__label > div,
-gua-widget .react-calendar__navigation__label > div {
-  pointer-events: auto !important;
-  position: relative !important;
-  z-index: 1 !important;
-}
-
-#gua-widget-container .react-calendar__navigation__label:hover,
-gua-widget .react-calendar__navigation__label:hover {
-  background-color: transparent !important;
-  color: #242424 !important;
-}
-
-/* El hover se maneja en el div interno */
-#gua-widget-container .react-calendar__navigation__label > div:hover,
-gua-widget .react-calendar__navigation__label > div:hover {
-  background-color: rgba(234, 198, 7, 0.1) !important;
-  color: #EAC607 !important;
-}
-
-#gua-widget-container .react-calendar__navigation__arrow,
-gua-widget .react-calendar__navigation__arrow {
-  font-size: 20px !important;
-  font-weight: 700 !important;
-}
-
-/* Días de la semana - Header minimalista */
-#gua-widget-container .react-calendar__month-view__weekdays,
-gua-widget .react-calendar__month-view__weekdays {
-  margin-bottom: 12px !important;
-  padding: 16px 28px 12px 28px !important;
-  background: #FFFFFF !important;
-}
-
-#gua-widget-container .react-calendar__month-view__weekdays__weekday,
-gua-widget .react-calendar__month-view__weekdays__weekday {
-  padding: 0 !important;
-  text-align: center !important;
-  font-size: 11px !important;
-  font-weight: 600 !important;
-  color: #9DABAF !important;
-  text-transform: uppercase !important;
-  letter-spacing: 1px !important;
-}
-
-#gua-widget-container .react-calendar__month-view__weekdays__weekday abbr,
-gua-widget .react-calendar__month-view__weekdays__weekday abbr {
-  text-decoration: none !important;
-  border-bottom: none !important;
-}
-
-/* Grid de días - Layout moderno */
-#gua-widget-container .react-calendar__month-view__days,
-gua-widget .react-calendar__month-view__days {
-  padding: 8px 24px 24px 24px !important;
-}
-
-/* Días del mes (tiles) - Diseño minimalista */
-#gua-widget-container .react-calendar__tile,
-gua-widget .react-calendar__tile {
-  width: 48px !important;
-  height: 48px !important;
-  padding: 0 !important;
-  border-radius: 50% !important;
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  margin: 4px !important;
-  font-size: 15px !important;
-  font-weight: 500 !important;
-  color: #242424 !important;
-  background: transparent !important;
-  border: none !important;
-  cursor: pointer !important;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  position: relative !important;
-}
-
-/* Fechas deshabilitadas (sin disponibilidad) */
-#gua-widget-container .react-calendar__tile:disabled,
-gua-widget .react-calendar__tile:disabled {
-  opacity: 0.2 !important;
-  cursor: not-allowed !important;
-  color: #9DABAF !important;
-  background: transparent !important;
-}
-
-/* Fecha disponible (sin seleccionar otra fecha) - Estilo sutil */
-#gua-widget-container .react-calendar__tile.available-date,
-gua-widget .react-calendar__tile.available-date {
-  background-color: rgba(234, 198, 7, 0.08) !important;
-  color: #242424 !important;
-  font-weight: 500 !important;
-}
-
-/* Fechas disponibles (hover) - Efecto suave */
-#gua-widget-container .react-calendar__tile.available-date:hover,
-gua-widget .react-calendar__tile.available-date:hover {
-  background-color: rgba(234, 198, 7, 0.15) !important;
-  transform: scale(1.08) !important;
-}
-
-/* Fecha disponible cuando hay otra fecha seleccionada */
-#gua-widget-container .react-calendar__tile.available-date-selected,
-gua-widget .react-calendar__tile.available-date-selected {
-  background-color: rgba(234, 198, 7, 0.12) !important;
-  color: #242424 !important;
-  opacity: 0.8 !important;
-}
-
-/* Fecha futura seleccionable sin disponibilidad - Estilo más sutil */
-#gua-widget-container .react-calendar__tile.selectable-date,
-gua-widget .react-calendar__tile.selectable-date {
-  background-color: rgba(157, 171, 175, 0.05) !important;
-  color: #9DABAF !important;
-  font-weight: 400 !important;
-  border: 1px dashed rgba(157, 171, 175, 0.2) !important;
-  cursor: pointer !important;
-}
-
-/* Fecha futura seleccionable sin disponibilidad (hover) */
-#gua-widget-container .react-calendar__tile.selectable-date:hover,
-gua-widget .react-calendar__tile.selectable-date:hover {
-  background-color: rgba(157, 171, 175, 0.1) !important;
-  border-color: rgba(157, 171, 175, 0.4) !important;
-  transform: scale(1.05) !important;
-}
-
-/* Fecha seleccionada - Destacada */
-#gua-widget-container .react-calendar__tile.selected-date,
-gua-widget .react-calendar__tile.selected-date {
-  background-color: #EAC607 !important;
-  color: #FFFFFF !important;
-  font-weight: 700 !important;
-  box-shadow: 0 4px 12px rgba(234, 198, 7, 0.4) !important;
-  transform: scale(1.1) !important;
-}
-
-#gua-widget-container .react-calendar__tile.selected-date:hover,
-gua-widget .react-calendar__tile.selected-date:hover {
-  background-color: #D4B706 !important;
-  transform: scale(1.12) !important;
-}
-
-/* Día actual (hoy) - Indicador sutil */
-#gua-widget-container .react-calendar__tile--now:not(.selected-date):not(.available-date),
-gua-widget .react-calendar__tile--now:not(.selected-date):not(.available-date) {
-  position: relative !important;
-  font-weight: 700 !important;
-}
-
-#gua-widget-container .react-calendar__tile--now:not(.selected-date):not(.available-date)::after,
-gua-widget .react-calendar__tile--now:not(.selected-date):not(.available-date)::after {
-  content: '' !important;
-  position: absolute !important;
-  bottom: 8px !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  width: 5px !important;
-  height: 5px !important;
-  background-color: #EAC607 !important;
-  border-radius: 50% !important;
-  box-shadow: 0 0 0 2px rgba(234, 198, 7, 0.2) !important;
-}
-
-/* Días de otros meses */
-#gua-widget-container .react-calendar__tile--neighboringMonth,
-gua-widget .react-calendar__tile--neighboringMonth {
-  opacity: 0.3 !important;
-  color: #9DABAF !important;
-}
-
-/* Responsive para móviles */
-@media (max-width: 450px) {
-  #gua-widget-container .react-calendar__tile,
-  gua-widget .react-calendar__tile {
-    width: 38px !important;
-    height: 38px !important;
-    margin: 3px !important;
-    font-size: 13px !important;
-  }
-
-  #gua-widget-container .react-calendar__navigation button,
-  gua-widget .react-calendar__navigation button {
-    min-width: 36px !important;
-    height: 36px !important;
-    font-size: 14px !important;
-  }
-
-  #gua-widget-container .react-calendar__navigation__label,
-  gua-widget .react-calendar__navigation__label {
-    font-size: 16px !important;
-  }
-}
-
-/* Asegurar que abbr no tenga subrayado */
 abbr[title] {
   text-decoration: none !important;
-  border-bottom: none !important;
 }
 
-/* Estilos para el scrollbar de horas */
-#gua-widget-container .flex.flex-wrap::-webkit-scrollbar,
-gua-widget .flex.flex-wrap::-webkit-scrollbar {
-  width: 6px !important;
-  height: 6px !important;
+.react-calendar__month-view__weekdays {
+  text-align: center;
+  color: #333;
 }
 
-#gua-widget-container .flex.flex-wrap::-webkit-scrollbar-track,
-gua-widget .flex.flex-wrap::-webkit-scrollbar-track {
-  background: #F9FAFA !important;
-  border-radius: 10px !important;
+.react-calendar__tile {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0.5rem;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-inline-end: unset !important;
 }
 
-#gua-widget-container .flex.flex-wrap::-webkit-scrollbar-thumb,
-gua-widget .flex.flex-wrap::-webkit-scrollbar-thumb {
-  background: #EAC607 !important;
-  border-radius: 10px !important;
+.react-calendar__tile.available-date {
+  background-color: #ffcc00;
+  color: #333;
 }
 
-#gua-widget-container .flex.flex-wrap::-webkit-scrollbar-thumb:hover,
-gua-widget .flex.flex-wrap::-webkit-scrollbar-thumb:hover {
-  background: #D4B706 !important;
+.react-calendar__tile.selected-date {
+  background-color: black;
+  color: white;
 }
 
-/* ============================================
-   ANIMACIONES PARA DROPDOWN DE MES/AÑO
-   ============================================ */
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
+.react-calendar__tile.available-date-selected {
+  background-color: #ffcc00;
+  color: black;
 }
 
-/* Asegurar que el dropdown del selector de mes/año tenga z-index alto */
-#gua-widget-container .react-calendar__navigation__label > div[style*="z-index"],
-gua-widget .react-calendar__navigation__label > div[style*="z-index"] {
-  z-index: 10000 !important;
-}
-
-/* Ocultar el header nativo de react-calendar ya que usamos nuestro propio header personalizado */
-#gua-widget-container .react-calendar__navigation,
-gua-widget .react-calendar__navigation {
-  display: none !important;
+.react-calendar__navigation__label__labelText,
+.react-calendar__navigation__label__labelText--from {
+  padding-left: 0.5em;
+  padding-right: 0.5em;
 }

@@ -1,5 +1,5 @@
-import { Controller, Get } from '@nestjs/common'
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger'
+import { Controller, Get, Query } from '@nestjs/common'
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger'
 import { MedicalSpecialtiesService } from './medical-specialties.service'
 
 @ApiTags('medical-specialties')
@@ -10,7 +10,13 @@ export class MedicalSpecialtiesController {
   @Get()
   @ApiOperation({ 
     summary: 'Obtener especialidades médicas',
-    description: 'Retorna la lista de especialidades médicas disponibles'
+    description: 'Retorna la lista de especialidades médicas disponibles. Use ?refresh=true para forzar recarga desde DriCloud.'
+  })
+  @ApiQuery({ 
+    name: 'refresh', 
+    required: false, 
+    type: Boolean, 
+    description: 'Si es true, fuerza la recarga desde DriCloud ignorando el caché' 
   })
   @ApiResponse({ 
     status: 200, 
@@ -28,8 +34,9 @@ export class MedicalSpecialtiesController {
     }
   })
   @ApiResponse({ status: 500, description: 'Error interno del servidor' })
-  async getMedicalSpecialties() {
-    const specialties = await this.medicalSpecialtiesService.getMedicalSpecialties();
+  async getMedicalSpecialties(@Query('refresh') refresh?: string) {
+    const forceRefresh = refresh === 'true';
+    const specialties = await this.medicalSpecialtiesService.getMedicalSpecialties(forceRefresh);
     
     // Asegurar que siempre devolvemos un array
     if (Array.isArray(specialties)) {

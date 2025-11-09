@@ -381,3 +381,6 @@ echo "✅ Diagnóstico completo"
 
 
 
+
+
+

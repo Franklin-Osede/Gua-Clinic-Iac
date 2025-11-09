@@ -130,34 +130,15 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
     async (date: Date) => {
       try {
         setLoadingDate(true);
-        const dateStr = formatStringFromDate(date);
-        console.log(`🔍 fetchAvailability: doctorId=${doctorId}, date=${dateStr}, datesToFetch=31`);
-        
         const data = await getDoctorAgenda(
           doctorId,
-          dateStr,
+          formatStringFromDate(date),
           31,
         );
-        
-        console.log(`✅ fetchAvailability respuesta:`, {
-          type: typeof data,
-          isArray: Array.isArray(data),
-          length: Array.isArray(data) ? data.length : 'N/A',
-          firstItems: Array.isArray(data) ? data.slice(0, 5) : data
-        });
-        
         setFullAvailableData(data);
         return data;
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        const errorStack = error instanceof Error ? error.stack : undefined;
-        console.error("❌ Error fetching available dates:", error);
-        console.error("❌ Error details:", {
-          message: errorMessage,
-          stack: errorStack,
-          doctorId,
-          date: formatStringFromDate(date)
-        });
+        console.error("Error fetching available dates:", error);
         return [];
       } finally {
         setLoadingDate(false);
@@ -179,13 +160,8 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
     };
 
     if (showMonthPicker) {
-      // Usar un pequeño delay para evitar que se cierre inmediatamente al abrir
-      const timeoutId = setTimeout(() => {
-        document.addEventListener('mousedown', handleClickOutside);
-      }, 100);
-      
+      document.addEventListener('mousedown', handleClickOutside);
       return () => {
-        clearTimeout(timeoutId);
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
@@ -216,27 +192,17 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
         }
         
         const currentDate = new Date();
-        const startDateStr = formatStringFromDate(currentDate);
-        console.log('📅 Inicializando calendario para doctorId:', doctorId, 'startDate:', startDateStr);
-        
+        console.log('📅 Inicializando calendario para doctorId:', doctorId);
         const data = await fetchAvailability(currentDate);
         
         console.log('📅 Datos recibidos de la API:', { 
           length: data?.length || 0, 
           firstItem: data?.[0],
-          sample: data?.slice(0, 3),
-          fullResponse: data
+          sample: data?.slice(0, 3) 
         });
 
         if (!data || !Array.isArray(data) || data.length === 0) {
           console.warn('⚠️ No hay datos disponibles para el doctor:', doctorId);
-          console.warn('⚠️ Verificar en DriCloud si el doctor tiene agenda visible y disponibilidad configurada');
-          console.warn('⚠️ URL de la API llamada:', `/doctor-availability/${doctorId}/${startDateStr}?dates_to_fetch=31`);
-          console.log('ℹ️ Permitiendo selección de fechas futuras aunque no haya disponibilidad');
-          // No retornar aquí, permitir que el calendario se muestre sin datos
-          // El usuario podrá seleccionar fechas futuras aunque no haya disponibilidad
-          setAvailableDates([]);
-          setFullAvailableData([]);
           setLoadingDate(false);
           setLoadingTime(false);
           return;
@@ -417,7 +383,7 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
 
   /**
    * Maneja el cambio de fecha seleccionada en el calendario
-   * Permite seleccionar cualquier fecha futura, incluso si no hay disponibilidad
+   * Valida que la fecha esté disponible antes de permitir la selección
    */
   const handleDateChange = (value: Value) => {
     if (!(value instanceof Date)) {
@@ -429,12 +395,18 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
     const selectedDateNormalized = new Date(value);
     selectedDateNormalized.setHours(0, 0, 0, 0);
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Verificar que la fecha esté disponible antes de seleccionarla
+    const isAvailable = availableDates.some(
+      (availableDate) => {
+        const availableDateNormalized = new Date(availableDate);
+        availableDateNormalized.setHours(0, 0, 0, 0);
+        return availableDateNormalized.getTime() === selectedDateNormalized.getTime();
+      }
+    );
 
-    // Solo validar que no sea una fecha pasada
-    if (selectedDateNormalized < today) {
-      console.log('⚠️ No se puede seleccionar una fecha pasada:', value);
+    if (!isAvailable) {
+      console.log('⚠️ Fecha no disponible o sin slots:', value);
+      // No permitir seleccionar fechas no disponibles
       return;
     }
 
@@ -469,9 +441,7 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
 
   /**
    * Determina si una fecha debe estar deshabilitada en el calendario
-   * Deshabilita solo fechas pasadas
-   * Si hay datos disponibles, marca visualmente las fechas con disponibilidad
-   * Si no hay datos, permite seleccionar cualquier fecha futura
+   * Deshabilita fechas pasadas y fechas sin disponibilidad
    */
   const isDateDisabled = ({ date }: { date: Date }) => {
     // Normalizar fechas para comparar solo día/mes/año
@@ -481,9 +451,21 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    // Solo deshabilitar fechas pasadas
-    // Permitir seleccionar cualquier fecha futura, incluso si no hay disponibilidad
-    return checkDate < today;
+    // Deshabilitar fechas pasadas
+    if (checkDate < today) {
+      return true;
+    }
+    
+    // Deshabilitar fechas que NO están en availableDates (sin disponibilidad)
+    const isAvailable = availableDates.some(
+      (availableDate) => {
+        const availableDateNormalized = new Date(availableDate);
+        availableDateNormalized.setHours(0, 0, 0, 0);
+        return availableDateNormalized.getTime() === checkDate.getTime();
+      }
+    );
+    
+    return !isAvailable;
   };
 
   /**
@@ -491,7 +473,6 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
    * - available-date: Fecha con disponibilidad (no seleccionada)
    * - available-date-selected: Fecha disponible cuando hay otra seleccionada
    * - selected-date: Fecha actualmente seleccionada
-   * - selectable-date: Fecha futura sin disponibilidad pero seleccionable
    */
   const tileClassName = ({ date, view }: { date: Date; view: string }) => {
     if (view !== "month") return null;
@@ -500,19 +481,16 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
     const dateNormalized = new Date(date);
     dateNormalized.setHours(0, 0, 0, 0);
     
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    // Si es una fecha pasada, no aplicar clase
-    if (dateNormalized < today) return null;
-    
-    const isAvailable = availableDates.length > 0 && availableDates.some(
+    const isAvailable = availableDates.some(
       (availableDate) => {
         const availableDateNormalized = new Date(availableDate);
         availableDateNormalized.setHours(0, 0, 0, 0);
         return availableDateNormalized.getTime() === dateNormalized.getTime();
       }
     );
+
+    // Si no está disponible, no aplicar clase (se deshabilitará automáticamente)
+    if (!isAvailable) return null;
 
     // Verificar si es la fecha seleccionada
     const isSelected =
@@ -524,17 +502,12 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
 
     if (isSelected) {
       return "selected-date";
-    } else if (isAvailable) {
-      // Si hay otra fecha seleccionada, mostrar esta como disponible pero no seleccionada
-      if (selectedDate || getMatchingDate(activeDate, availableDates)) {
-        return "available-date-selected";
-      } else {
-        // Fecha disponible sin selección
-        return "available-date";
-      }
+    } else if (selectedDate || getMatchingDate(activeDate, availableDates)) {
+      // Hay otra fecha seleccionada, mostrar esta como disponible pero no seleccionada
+      return "available-date-selected";
     } else {
-      // Fecha futura sin disponibilidad pero seleccionable
-      return "selectable-date";
+      // Fecha disponible sin selección
+      return "available-date";
     }
   };
 
@@ -569,25 +542,13 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
     // Cerrar el selector de mes/año cuando se cambia de mes usando las flechas
     setShowMonthPicker(false);
 
-    // Actualizar activeStartDate primero para permitir la navegación
-    setActiveStartDate(activeStartDate);
-
-    // Intentar cargar disponibilidad para el nuevo mes
-    // Si falla, el calendario seguirá funcionando sin datos
-    try {
-      const firstDayOfMonth = new Date(
-        activeStartDate.getFullYear(),
-        activeStartDate.getMonth(),
-        1,
-      );
-      const data = await fetchAvailability(firstDayOfMonth);
-      parseAvailableDates(data);
-    } catch (error) {
-      console.warn('⚠️ Error cargando disponibilidad para el nuevo mes, continuando sin datos:', error);
-      // Permitir navegación incluso si hay error
-      setAvailableDates([]);
-      setFullAvailableData([]);
-    }
+    const firstDayOfMonth = new Date(
+      activeStartDate.getFullYear(),
+      activeStartDate.getMonth(),
+      1,
+    );
+    const data = await fetchAvailability(firstDayOfMonth);
+    parseAvailableDates(data);
   };
 
   return (
@@ -639,9 +600,8 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
       <div className="flex items-center justify-center w-full mb-8" style={{ 
         width: '100%',
         display: 'flex',
-        flexDirection: 'column',
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         marginBottom: '32px'
       }}>
         {loadingDate ? (
@@ -649,159 +609,131 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
             <PuffLoader size={50} color={"#EAC607"} loading={loadingDate} />
           </div>
         ) : (
-          <>
-            {/* Header personalizado con selector de mes/año */}
-            <div style={{
-              width: '100%',
-              maxWidth: '350px',
-              marginBottom: '16px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '0 12px'
-            }}>
-              <button
-                type="button"
-                onClick={() => {
-                  const newDate = new Date(activeStartDate);
-                  newDate.setMonth(newDate.getMonth() - 1);
-                  handleActiveStartDateChange({ activeStartDate: newDate });
-                }}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                  color: '#242424',
-                  padding: '8px',
-                  borderRadius: '8px',
-                  transition: 'all 0.15s ease',
-                  fontWeight: 600
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(234, 198, 7, 0.1)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-                aria-label="Mes anterior"
-              >
-                ‹
-              </button>
-
-              {/* Selector de mes/año */}
-              <div 
-                ref={monthPickerRef}
-                style={{ 
-                  position: 'relative', 
-                  display: 'inline-block',
-                  flex: 1,
-                  margin: '0 12px'
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    setShowMonthPicker(!showMonthPicker);
-                  }}
-                  style={{ 
-                    width: '100%',
-                    cursor: 'pointer',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    transition: 'all 0.15s ease',
-                    fontFamily: 'inherit',
-                    fontSize: '16px',
-                    fontWeight: 700,
-                    color: '#242424',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                    outline: 'none',
-                    userSelect: 'none',
-                    border: 'none',
-                    background: showMonthPicker ? 'rgba(234, 198, 7, 0.1)' : 'transparent'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!showMonthPicker) {
-                      e.currentTarget.style.backgroundColor = 'rgba(234, 198, 7, 0.1)';
-                      e.currentTarget.style.color = '#EAC607';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!showMonthPicker) {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                      e.currentTarget.style.color = '#242424';
-                    }
-                  }}
-                  aria-label="Seleccionar mes y año"
-                  aria-expanded={showMonthPicker}
-                >
-                  <span style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    justifyContent: 'center',
-                    width: '100%'
-                  }}>
-                    {(() => {
-                      const months = [
-                        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-                        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-                      ];
-                      return `${months[activeStartDate.getMonth()].toUpperCase()} DE ${activeStartDate.getFullYear()}`;
-                    })()}
-                    <span 
-                      style={{ 
-                        fontSize: '10px', 
-                        marginLeft: '6px',
-                        transition: 'transform 0.2s ease',
-                        transform: showMonthPicker ? 'rotate(180deg)' : 'rotate(0deg)',
-                        display: 'inline-block'
-                      }}
-                    >
-                      ▼
-                    </span>
-                  </span>
-                </button>
+            <Calendar
+              locale="es-ES"
+              onChange={handleDateChange}
+              value={selectedDate}
+              tileClassName={tileClassName}
+              tileDisabled={isDateDisabled}
+              activeStartDate={activeStartDate}
+              onActiveStartDateChange={({ activeStartDate }) =>
+                handleActiveStartDateChange({ activeStartDate })
+              }
+              view="month"
+              minDetail="month"
+              maxDetail="month"
+              prevLabel={"‹"}
+              nextLabel={"›"}
+              prev2Label={null}
+              next2Label={null}
+              navigationLabel={({ date, label }) => {
+                // Dropdown para seleccionar mes/año
+                const months = [
+                  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+                ];
+                const currentMonth = date.getMonth();
+                const currentYear = date.getFullYear();
                 
-                {/* Dropdown de meses */}
-                {showMonthPicker && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: 'calc(100% + 8px)',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      backgroundColor: '#FFFFFF',
-                      borderRadius: '12px',
-                      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)',
-                      padding: '16px',
-                      minWidth: '300px',
-                      zIndex: 10000,
-                      border: '1px solid rgba(0, 0, 0, 0.06)',
-                      animation: 'fadeIn 0.2s ease-out'
+                return (
+                  <div 
+                    ref={monthPickerRef}
+                    style={{ 
+                      position: 'relative', 
+                      display: 'inline-block',
+                      width: '100%',
+                      zIndex: showMonthPicker ? 10000 : 'auto'
                     }}
-                    onClick={(e) => e.stopPropagation()}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') {
-                        setShowMonthPicker(false);
-                      }
-                    }}
-                    role="dialog"
-                    aria-label="Selector de mes y año"
                   >
-                    {(() => {
-                      const months = [
-                        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-                        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-                      ];
-                      const currentMonth = activeStartDate.getMonth();
-                      const currentYear = activeStartDate.getFullYear();
-                      
-                      return (
-                        <>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setShowMonthPicker(!showMonthPicker);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setShowMonthPicker(!showMonthPicker);
+                        }
+                        if (e.key === 'Escape') {
+                          setShowMonthPicker(false);
+                        }
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        transition: 'all 0.15s ease',
+                        fontFamily: 'inherit',
+                        fontSize: '16px',
+                        fontWeight: 700,
+                        color: '#242424',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        outline: 'none',
+                        width: '100%',
+                        justifyContent: 'center'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(234, 198, 7, 0.1)';
+                        e.currentTarget.style.color = '#EAC607';
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!showMonthPicker) {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                          e.currentTarget.style.color = '#242424';
+                        }
+                      }}
+                      aria-label="Seleccionar mes y año"
+                      aria-expanded={showMonthPicker}
+                    >
+                      {label}
+                      <span 
+                        style={{ 
+                          fontSize: '10px', 
+                          marginLeft: '6px',
+                          transition: 'transform 0.2s ease',
+                          transform: showMonthPicker ? 'rotate(180deg)' : 'rotate(0deg)',
+                          display: 'inline-block'
+                        }}
+                      >
+                        ▼
+                      </span>
+                    </button>
+                    
+                    {showMonthPicker && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: 'calc(100% + 8px)',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          backgroundColor: '#FFFFFF',
+                          borderRadius: '12px',
+                          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)',
+                          padding: '16px',
+                          minWidth: '300px',
+                          zIndex: 10000,
+                          border: '1px solid rgba(0, 0, 0, 0.06)',
+                          animation: 'fadeIn 0.2s ease-out'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') {
+                            setShowMonthPicker(false);
+                          }
+                        }}
+                        role="dialog"
+                        aria-label="Selector de mes y año"
+                      >
                           {/* Selector de año */}
                           <div style={{
                             display: 'flex',
@@ -813,25 +745,11 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
                           }}>
                             <button
                               type="button"
-                              onClick={async (e) => {
+                              onClick={(e) => {
                                 e.stopPropagation();
                                 const newDate = new Date(activeStartDate);
                                 newDate.setFullYear(newDate.getFullYear() - 1);
                                 setActiveStartDate(newDate);
-                                
-                                try {
-                                  const firstDayOfMonth = new Date(
-                                    newDate.getFullYear(),
-                                    newDate.getMonth(),
-                                    1,
-                                  );
-                                  const data = await fetchAvailability(firstDayOfMonth);
-                                  parseAvailableDates(data);
-                                } catch (error) {
-                                  console.warn('⚠️ Error cargando disponibilidad al cambiar año, continuando sin datos:', error);
-                                  setAvailableDates([]);
-                                  setFullAvailableData([]);
-                                }
                               }}
                               style={{
                                 background: 'rgba(234, 198, 7, 0.1)',
@@ -871,25 +789,11 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
                             </span>
                             <button
                               type="button"
-                              onClick={async (e) => {
+                              onClick={(e) => {
                                 e.stopPropagation();
                                 const newDate = new Date(activeStartDate);
                                 newDate.setFullYear(newDate.getFullYear() + 1);
                                 setActiveStartDate(newDate);
-                                
-                                try {
-                                  const firstDayOfMonth = new Date(
-                                    newDate.getFullYear(),
-                                    newDate.getMonth(),
-                                    1,
-                                  );
-                                  const data = await fetchAvailability(firstDayOfMonth);
-                                  parseAvailableDates(data);
-                                } catch (error) {
-                                  console.warn('⚠️ Error cargando disponibilidad al cambiar año, continuando sin datos:', error);
-                                  setAvailableDates([]);
-                                  setFullAvailableData([]);
-                                }
                               }}
                               style={{
                                 background: 'rgba(234, 198, 7, 0.1)',
@@ -930,26 +834,12 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
                               <button
                                 key={month}
                                 type="button"
-                                onClick={async (e) => {
+                                onClick={(e) => {
                                   e.stopPropagation();
                                   const newDate = new Date(activeStartDate);
                                   newDate.setMonth(index);
                                   setActiveStartDate(newDate);
                                   setShowMonthPicker(false);
-                                  
-                                  try {
-                                    const firstDayOfMonth = new Date(
-                                      newDate.getFullYear(),
-                                      newDate.getMonth(),
-                                      1,
-                                    );
-                                    const data = await fetchAvailability(firstDayOfMonth);
-                                    parseAvailableDates(data);
-                                  } catch (error) {
-                                    console.warn('⚠️ Error cargando disponibilidad al seleccionar mes, continuando sin datos:', error);
-                                    setAvailableDates([]);
-                                    setFullAvailableData([]);
-                                  }
                                 }}
                                 style={{
                                   padding: '12px 8px',
@@ -982,66 +872,12 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
                               </button>
                             ))}
                           </div>
-                        </>
-                      );
-                    })()}
+                        </div>
+                    )}
                   </div>
-                )}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  const newDate = new Date(activeStartDate);
-                  newDate.setMonth(newDate.getMonth() + 1);
-                  handleActiveStartDateChange({ activeStartDate: newDate });
-                }}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                  color: '#242424',
-                  padding: '8px',
-                  borderRadius: '8px',
-                  transition: 'all 0.15s ease',
-                  fontWeight: 600
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(234, 198, 7, 0.1)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-                aria-label="Mes siguiente"
-              >
-                ›
-              </button>
-            </div>
-
-            <Calendar
-              locale="es-ES"
-              onChange={handleDateChange}
-              value={selectedDate}
-              tileClassName={tileClassName}
-              tileDisabled={isDateDisabled}
-              activeStartDate={activeStartDate}
-              onActiveStartDateChange={({ activeStartDate }) =>
-                handleActiveStartDateChange({ activeStartDate })
-              }
-              view="month"
-              minDetail="month"
-              maxDetail="month"
-              prevLabel={null}
-              nextLabel={null}
-              prev2Label={null}
-              next2Label={null}
-              navigationLabel={() => {
-                // Ocultar el header nativo de react-calendar ya que usamos nuestro propio header
-                return <span style={{ display: 'none' }}></span>;
+                );
               }}
             />
-          </>
         )}
       </div>
 

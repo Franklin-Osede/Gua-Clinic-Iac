@@ -210,3 +210,6 @@ Para verificar que los datos están llegando correctamente:
 5. **Actualizar después de reservas**: Refrescar disponibilidad después de crear una cita
 
 
+
+
+

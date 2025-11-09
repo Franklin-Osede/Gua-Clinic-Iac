@@ -2,7 +2,7 @@
 /**
  * Plugin Name: GUA Clinic Widget
  * Description: Widget para sistema de citas médicas GUA Clinic
- * Version: 1.0.6
+ * Version: 1.0.7
  * Author: GUA Clinic
  */
 
@@ -12,10 +12,12 @@ if (!defined('ABSPATH')) {
 }
 
 class GuaClinicWidget {
+    private static $scripts_enqueued = false;
     
     public function __construct() {
         add_action('init', array($this, 'init'));
         add_shortcode('gua_clinic_widget', array($this, 'render_widget'));
+        // También intentar cargar scripts en wp_enqueue_scripts como fallback
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
     }
     
@@ -24,48 +26,111 @@ class GuaClinicWidget {
         add_shortcode('gua_clinic_widget', array($this, 'render_widget'));
     }
     
-    public function enqueue_scripts() {
-        // Solo cargar en páginas que usen el shortcode
-        if (is_singular() && has_shortcode(get_post()->post_content, 'gua_clinic_widget')) {
-            // Cargar CSS PRIMERO (crítico para que Tailwind y estilos funcionen)
-            $css_url = plugins_url('style.css', __FILE__);
-            $css_path = plugin_dir_path(__FILE__) . 'style.css';
-            if (file_exists($css_path)) {
-                    $css_version = '1.0.6-' . filemtime($css_path);
-                // ⚠️ IMPORTANTE: Cargar CSS con prioridad alta y sin dependencias
-                // Usar wp_enqueue_style con prioridad 1 para que se cargue primero
-                wp_enqueue_style(
-                    'gua-widget-css',
-                    $css_url,
-                    array(), // Sin dependencias para evitar conflictos
-                    $css_version,
-                    'all'
-                );
-            }
-            
-            // Cargar JavaScript
-            $widget_url = plugins_url('gua-widget.iife.js', __FILE__);
-            
-            // Si no existe localmente, usar CDN como fallback
-            $widget_path = plugin_dir_path(__FILE__) . 'gua-widget.iife.js';
-            if (!file_exists($widget_path)) {
-                $widget_url = 'https://cdn.gua.com/gua-widget.js';
-            }
-            
-            // Agregar timestamp para evitar caché del navegador
-                $version = '1.0.6-' . filemtime($widget_path ?: __FILE__);
-            
-            wp_enqueue_script(
-                'gua-widget',
-                $widget_url,
-                array(),
-                $version,
-                true
+    /**
+     * Carga los scripts y estilos del widget
+     * Se llama automáticamente cuando se renderiza el shortcode
+     */
+    private function enqueue_widget_assets() {
+        // Evitar cargar múltiples veces
+        if (self::$scripts_enqueued) {
+            return;
+        }
+        
+        // Cargar CSS PRIMERO (crítico para que Tailwind y estilos funcionen)
+        $css_url = plugins_url('style.css', __FILE__);
+        $css_path = plugin_dir_path(__FILE__) . 'style.css';
+        if (file_exists($css_path)) {
+            $css_version = '1.0.7-' . filemtime($css_path);
+            // ⚠️ IMPORTANTE: Cargar CSS con prioridad alta y sin dependencias
+            wp_enqueue_style(
+                'gua-widget-css',
+                $css_url,
+                array(), // Sin dependencias para evitar conflictos
+                $css_version,
+                'all'
             );
+        }
+        
+        // Cargar JavaScript
+        $widget_url = plugins_url('gua-widget.iife.js', __FILE__);
+        $widget_path = plugin_dir_path(__FILE__) . 'gua-widget.iife.js';
+        
+        // Si no existe localmente, usar CDN como fallback
+        if (!file_exists($widget_path)) {
+            $widget_url = 'https://cdn.gua.com/gua-widget.js';
+            $version = '1.0.7';
+        } else {
+            // Agregar timestamp para evitar caché del navegador
+            $version = '1.0.7-' . filemtime($widget_path);
+        }
+        
+        wp_enqueue_script(
+            'gua-widget',
+            $widget_url,
+            array(),
+            $version,
+            true
+        );
+        
+        self::$scripts_enqueued = true;
+    }
+    
+    /**
+     * Intenta cargar scripts en wp_enqueue_scripts como fallback
+     * Esto ayuda cuando el shortcode está en bloques de Gutenberg o widgets
+     */
+    public function enqueue_scripts() {
+        // Intentar detectar el shortcode de varias formas
+        $should_load = false;
+        
+        // Método 1: Verificar en contenido del post (método tradicional)
+        if (is_singular()) {
+            $post = get_post();
+            if ($post && has_shortcode($post->post_content, 'gua_clinic_widget')) {
+                $should_load = true;
+            }
+        }
+        
+        // Método 2: Verificar en bloques de Gutenberg
+        if (!$should_load && is_singular()) {
+            $post = get_post();
+            if ($post && has_blocks($post->post_content)) {
+                // Buscar el shortcode en los bloques
+                if (strpos($post->post_content, 'gua_clinic_widget') !== false) {
+                    $should_load = true;
+                }
+            }
+        }
+        
+        // Método 3: Verificar en widgets/sidebars
+        if (!$should_load) {
+            // Buscar en todos los sidebars activos
+            global $wp_registered_sidebars;
+            if (is_array($wp_registered_sidebars)) {
+                foreach ($wp_registered_sidebars as $sidebar) {
+                    if (is_active_sidebar($sidebar['id'])) {
+                        ob_start();
+                        dynamic_sidebar($sidebar['id']);
+                        $sidebar_content = ob_get_clean();
+                        if (strpos($sidebar_content, 'gua_clinic_widget') !== false) {
+                            $should_load = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        if ($should_load) {
+            $this->enqueue_widget_assets();
         }
     }
     
     public function render_widget($atts) {
+        // ⚠️ CRÍTICO: Cargar scripts cuando se renderiza el shortcode
+        // Esto asegura que los scripts se carguen incluso si wp_enqueue_scripts no los detectó
+        $this->enqueue_widget_assets();
+        
         // Atributos por defecto
         $atts = shortcode_atts(array(
             'locale' => 'es',

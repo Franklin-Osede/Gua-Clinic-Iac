@@ -13,28 +13,36 @@ export class MedicalSpecialtiesService {
     private dynamoDBService: DynamoDBService,
   ) {}
 
-  async getMedicalSpecialties() {
-    // Verificar caché primero
-    const cachedData = await this.dynamoDBService.getFromCache<any>(this.CACHE_KEY);
+  async getMedicalSpecialties(forceRefresh: boolean = false) {
+    // Si forceRefresh es true, limpiar el caché primero
+    if (forceRefresh) {
+      this.logger.log('🔄 Forzando recarga de especialidades desde DriCloud (ignorando caché)');
+      await this.dynamoDBService.deleteFromCache(this.CACHE_KEY);
+    }
     
-    if (cachedData) {
-      this.logger.debug('Returning medical specialties from cache');
-      // Si el caché tiene la estructura { Especialidades: [...] }, extraer el array
-      if (Array.isArray(cachedData)) {
-        // Asegurar que los datos en caché tengan el formato correcto (id, name)
-        return cachedData.map((esp: any) => ({
-          id: esp.id || esp.ESP_ID,
-          name: esp.name || esp.ESP_NOMBRE || esp.Nombre || '',
-          ...esp
-        }));
-      } else if (cachedData && typeof cachedData === 'object' && 'Especialidades' in cachedData && Array.isArray(cachedData.Especialidades)) {
-        return cachedData.Especialidades.map((esp: any) => ({
-          id: esp.id || esp.ESP_ID,
-          name: esp.name || esp.ESP_NOMBRE || esp.Nombre || '',
-          ...esp
-        }));
+    // Verificar caché primero (solo si no se fuerza refresh)
+    if (!forceRefresh) {
+      const cachedData = await this.dynamoDBService.getFromCache<any>(this.CACHE_KEY);
+      
+      if (cachedData) {
+        this.logger.debug('Returning medical specialties from cache');
+        // Si el caché tiene la estructura { Especialidades: [...] }, extraer el array
+        if (Array.isArray(cachedData)) {
+          // Asegurar que los datos en caché tengan el formato correcto (id, name)
+          return cachedData.map((esp: any) => ({
+            id: esp.id || esp.ESP_ID,
+            name: esp.name || esp.ESP_NOMBRE || esp.Nombre || '',
+            ...esp
+          }));
+        } else if (cachedData && typeof cachedData === 'object' && 'Especialidades' in cachedData && Array.isArray(cachedData.Especialidades)) {
+          return cachedData.Especialidades.map((esp: any) => ({
+            id: esp.id || esp.ESP_ID,
+            name: esp.name || esp.ESP_NOMBRE || esp.Nombre || '',
+            ...esp
+          }));
+        }
+        return [];
       }
-      return [];
     }
 
     this.logger.log('Fetching medical specialties from DriCloud...');

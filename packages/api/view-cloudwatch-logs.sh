@@ -72,3 +72,6 @@ echo "   aws logs tail $LATEST_LOG_GROUP --follow --region $REGION"
 
 
 
+
+
+

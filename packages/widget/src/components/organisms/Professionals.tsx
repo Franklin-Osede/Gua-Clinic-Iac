@@ -2,17 +2,7 @@ import React, { useEffect, useState } from "react";
 import ProfessionalCardOption from "../molecules/ProfessionalCard.tsx";
 import { getDoctors } from "../../services/GuaAPIService.ts";
 import { PuffLoader } from "react-spinners";
-import Doctor18 from "../atoms/images/Doctor18.tsx";
-import Doctor20 from "../atoms/images/Doctor20.tsx";
-import Doctor24 from "../atoms/images/Doctor24.tsx";
-import Doctor3 from "../atoms/images/Doctor3.tsx";
-import Doctor4 from "../atoms/images/Doctor4.tsx";
-import Doctor5 from "../atoms/images/Doctor5.tsx";
-import Doctor26 from "../atoms/images/Doctor26.tsx";
-import Doctor33 from "../atoms/images/Doctor33.tsx";
-import Doctor44 from "../atoms/images/Doctor44.tsx";
-import Doctor56 from "../atoms/images/Doctor56.tsx";
-import Doctor25 from "../atoms/images/Doctor25.tsx";
+import DoctorImage from "../atoms/DoctorImage.tsx";
 
 interface ProfessionalsProps {
   activeProfessionalId: number | null;
@@ -27,19 +17,6 @@ interface DoctorInfo {
   id: number;
 }
 
-const doctorPhotos: Record<number, JSX.Element> = {
-  3: <Doctor3 />,
-  4: <Doctor4 />,
-  5: <Doctor5 />,
-  18: <Doctor18 />,
-  20: <Doctor20 />,
-  24: <Doctor24 />,
-  25: <Doctor25 />,
-  26: <Doctor26 />,
-  33: <Doctor33 />,
-  44: <Doctor44 />,
-  56: <Doctor56 />,
-};
 
 // Mapeo de profesionales permitidos por especialidad
 // Formato: nombre normalizado (sin acentos, minúsculas) -> nombres permitidos (búsqueda parcial)
@@ -253,43 +230,6 @@ const Professionals: React.FC<ProfessionalsProps> = ({
               raw: doctor
             });
             
-            // Determinar la foto a mostrar
-            let photo: JSX.Element;
-            
-            // 1. Primero intentar usar FotoPerfil de DriCloud si está disponible
-            if (doctor.FotoPerfil && doctor.FotoPerfil.trim() !== '') {
-              photo = (
-                <img 
-                  src={doctor.FotoPerfil} 
-                  alt={`${doctor.name} ${doctor.surname}`}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    // Si falla la carga, usar fallback
-                    const fallbackPhoto = doctorPhotos[doctor.doctor_id];
-                    if (fallbackPhoto) {
-                      e.currentTarget.style.display = 'none';
-                      // Renderizar fallback si existe
-                    } else {
-                      // Mostrar placeholder si no hay foto
-                      e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2U1ZTdlYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Y2EzYWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5EUjwvdGV4dD48L3N2Zz4=';
-                    }
-                  }}
-                />
-              );
-            } 
-            // 2. Si no hay FotoPerfil, usar el Record hardcodeado
-            else if (doctorPhotos[doctorId]) {
-              photo = doctorPhotos[doctorId];
-            } 
-            // 3. Si no hay nada, mostrar placeholder
-            else {
-              photo = (
-                <div className="w-full h-full flex items-center justify-center bg-gray-200 rounded-full">
-                  <span className="text-gray-500 text-xs font-semibold">DR</span>
-                </div>
-              );
-            }
-            
             // Construir nombre completo, asegurando que siempre se muestre
             // Asegurar que siempre tengamos un nombre para mostrar
             let displayName = 'Dr';
@@ -308,6 +248,33 @@ const Professionals: React.FC<ProfessionalsProps> = ({
               displayName = doctorId ? `Dr (ID: ${doctorId})` : 'Dr';
               console.warn(`⚠️ Doctor sin nombre completo - ID: ${doctorId}, datos:`, doctor);
             }
+            
+            // Log para identificar doctores sin imagen (después de construir displayName)
+            if (!doctor.FotoPerfil || doctor.FotoPerfil.trim() === '') {
+              const normalizedName = normalizeName(displayName);
+              const isCarlosBlanco = normalizedName.includes('carlos') && normalizedName.includes('blanco');
+              
+              if (isCarlosBlanco) {
+                console.log(`🔵 CARLOS BLANCO detectado sin FotoPerfil: ${displayName} (ID: ${doctorId})`);
+                console.log(`🔵 ID de Carlos Blanco: ${doctorId}`);
+              }
+              
+              console.log(`⚠️ Doctor sin FotoPerfil de DriCloud: ${displayName} (ID: ${doctorId})`);
+              console.log(`📝 Para agregar imagen local, guarda la imagen en: /public/doctors/${doctorId}.jpg o ${doctorId}.png`);
+              console.log(`📝 Y agrega al mapeo: ${doctorId}: '/doctors/${doctorId}.png'`);
+            }
+            
+            // Usar el componente DoctorImage que maneja el fallback automáticamente
+            const photo = (
+              <div className="w-full h-full rounded-full overflow-hidden">
+                <DoctorImage
+                  doctorId={doctorId}
+                  dricloudImage={doctor.FotoPerfil}
+                  alt={`${firstName} ${lastName}`}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            );
             
             // Log para debugging
             console.log(`👤 Doctor procesado: ${displayName} (ID: ${doctorId}, firstName: "${firstName}", lastName: "${lastName}")`);

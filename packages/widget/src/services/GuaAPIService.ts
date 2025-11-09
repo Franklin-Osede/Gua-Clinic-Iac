@@ -67,9 +67,10 @@ export const initializeSession = async () => {
   }
 };
 
-export const getMedicalSpecialties = async () => {
+export const getMedicalSpecialties = async (refresh: boolean = false) => {
   try {
-    const response = await apiClient.get(`/medical-specialties`);
+    const url = refresh ? `/medical-specialties?refresh=true` : `/medical-specialties`;
+    const response = await apiClient.get(url);
     // El backend ahora devuelve directamente un array de especialidades
     // Manejar tanto array directo como estructura antigua
     if (Array.isArray(response.data)) {

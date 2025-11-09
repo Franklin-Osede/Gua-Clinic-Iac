@@ -1,0 +1,15 @@
+Hola Adán,
+
+El calendario no está devolviendo datos con GetAgendaDisponibilidad, aunque el resto de endpoints funcionan bien.
+
+Estamos enviando:
+- USU_ID
+- fecha (formato yyyyMMdd)
+- diasRecuperar (entre 1 y 31)
+
+¿Qué parámetros exactos usáis vosotros? ¿Enviáis también DES_ID, CLI_ID o ESP_ID?
+
+Si puedes pasarme un ejemplo de cómo lo tenéis implementado, te lo agradezco.
+
+Saludos.
+

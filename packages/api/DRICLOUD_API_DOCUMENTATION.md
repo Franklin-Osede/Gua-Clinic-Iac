@@ -510,3 +510,6 @@ POST https://apidricloud.dricloud.net/<URLClínica>/api/APIWeb/GetPacienteHistor
 
 
 
+
+
+
