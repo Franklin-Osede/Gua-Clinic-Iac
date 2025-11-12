@@ -21,20 +21,23 @@ interface DoctorInfo {
 // Mapeo de profesionales permitidos por especialidad
 // Formato: nombre normalizado (sin acentos, minúsculas) -> nombres permitidos (búsqueda parcial)
 const allowedProfessionals: Record<string, string[]> = {
-  // Urología y Andrología
+  // Urología y Andrología - SOLO estos 3 doctores
   'urologia': ['nicolas nervo', 'andres humberto vargas', 'andrea noya'],
   'andrologia': ['nicolas nervo', 'andres humberto vargas', 'andrea noya'],
   'medicinasexual': ['nicolas nervo', 'andres humberto vargas', 'andrea noya'],
-  // Psicología - solo Jasmina García Velázquez
-  'psicologia': ['jasmina', 'jasmina garcia', 'jasmina garcia velazquez', 'garcia velazquez', 'velazquez'],
-  // Fisioterapia: se maneja en el filtro especial (muestra todos excepto Jasmina)
-  // Medicina Física y Rehabilitación
-  'medicinafisica': ['maria consuelo', 'consuelo'],
-  'rehabilitacion': ['maria consuelo', 'consuelo'],
-  // Ginecología
-  'ginecologia': ['carlos blanco'],
-  // Medicina Integrativa
-  'medicinaintegrativa': ['diego puebla'],
+  // Fisioterapia - SOLO Jasmina (viene de Psicología en DriCloud)
+  'fisioterapia': ['jasmina', 'jasmina garcia', 'jasmina garcia velazquez', 'jasmina garcia velázquez', 'garcia velazquez', 'velazquez'],
+  // Medicina Rehabilitadora - SOLO María Consuelo
+  'medicinafisica': ['maria consuelo', 'consuelo', 'maria c', 'maria consuelo'],
+  'rehabilitacion': ['maria consuelo', 'consuelo', 'maria c', 'maria consuelo'],
+  'medicinarehabilitadora': ['maria consuelo', 'consuelo', 'maria c', 'maria consuelo'],
+  // Ginecología - SOLO Carlos Blanco
+  'ginecologia': ['carlos blanco', 'carlos', 'blanco', 'carlos blanco'],
+  // Medicina Integrativa - SOLO Diego Puebla (también se llama Medicina Preventiva)
+  'medicinaintegrativa': ['diego puebla', 'diego', 'puebla'],
+  'medicinapreventiva': ['diego puebla', 'diego', 'puebla'],
+  'preventiva': ['diego puebla', 'diego', 'puebla'],
+  'integrativa': ['diego puebla', 'diego', 'puebla'],
 };
 
 // Función para normalizar nombres (quitar acentos, minúsculas, espacios)
@@ -54,7 +57,7 @@ const isDoctorAllowed = (doctorName: string, serviceName: string): boolean => {
   console.log(`🔍 Verificando doctor: "${doctorName}" (normalizado: "${normalizedDoctor}") para especialidad: "${serviceName}" (normalizado: "${normalizedService}")`);
   
   // Si el nombre del doctor está vacío, no permitir (pero loguear para debug)
-  if (!normalizedDoctor || normalizedDoctor === 'dr') {
+  if (!normalizedDoctor || normalizedDoctor === 'dr' || normalizedDoctor.trim() === '') {
     console.warn(`⚠️ Doctor sin nombre válido: "${doctorName}"`);
     return false;
   }
@@ -62,26 +65,41 @@ const isDoctorAllowed = (doctorName: string, serviceName: string): boolean => {
   // Buscar en todas las claves de allowedProfessionals
   let foundMatchingKey = false;
   for (const [key, allowedNames] of Object.entries(allowedProfessionals)) {
-    if (normalizedService.includes(key)) {
+    // Búsqueda más flexible: verificar si la especialidad normalizada contiene la clave o viceversa
+    const serviceMatches = normalizedService.includes(key) || key.includes(normalizedService);
+    
+    if (serviceMatches) {
       foundMatchingKey = true;
       console.log(`🔑 Especialidad "${normalizedService}" coincide con clave "${key}", nombres permitidos:`, allowedNames);
       
       // Verificar si el nombre del doctor coincide con alguno de los permitidos
       const matches = allowedNames.some(allowed => {
         // Búsqueda más flexible: verificar si el nombre del doctor contiene alguna parte del nombre permitido
-        const doctorParts = normalizedDoctor.split(' ').filter(p => p.length > 0);
-        const allowedParts = allowed.split(' ').filter(p => p.length > 0);
+        const doctorParts = normalizedDoctor.split(' ').filter(p => p.length > 1); // Al menos 2 caracteres
+        const allowedParts = allowed.split(' ').filter(p => p.length > 1);
         
         // Verificar si alguna parte del nombre permitido está en el nombre del doctor
         const match = allowedParts.some(part => {
           return doctorParts.some(docPart => {
-            const found = docPart.includes(part) || part.includes(docPart);
+            // Coincidencia más flexible: si alguna parte coincide significativamente
+            const found = docPart.includes(part) || part.includes(docPart) || 
+                         (part.length >= 3 && docPart.length >= 3 && 
+                          (docPart.startsWith(part) || part.startsWith(docPart)));
             if (found) {
               console.log(`  ✅ Match parcial: "${part}" encontrado en "${docPart}"`);
             }
             return found;
           });
         });
+        
+        // También verificar coincidencia completa
+        if (!match) {
+          const fullMatch = normalizedDoctor.includes(allowed) || allowed.includes(normalizedDoctor);
+          if (fullMatch) {
+            console.log(`  ✅ Match completo: "${normalizedDoctor}" contiene "${allowed}"`);
+            return true;
+          }
+        }
         
         return match;
       });
@@ -90,6 +108,8 @@ const isDoctorAllowed = (doctorName: string, serviceName: string): boolean => {
         console.log(`✅ Match encontrado: "${normalizedDoctor}" coincide con "${allowedNames.join(' o ')}"`);
       } else {
         console.log(`❌ No hay match: "${normalizedDoctor}" no coincide con ninguno de: "${allowedNames.join(' o ')}"`);
+        console.log(`   Partes del doctor: [${normalizedDoctor.split(' ').join(', ')}]`);
+        console.log(`   Nombres permitidos: [${allowedNames.join(', ')}]`);
       }
       
       return matches;
@@ -98,7 +118,8 @@ const isDoctorAllowed = (doctorName: string, serviceName: string): boolean => {
   
   // Si no hay restricciones para esta especialidad, permitir todos
   if (!foundMatchingKey) {
-    console.log(`ℹ️ No hay restricciones configuradas para "${serviceName}", permitiendo todos los doctores`);
+    console.log(`ℹ️ No hay restricciones configuradas para "${serviceName}" (normalizado: "${normalizedService}"), permitiendo todos los doctores`);
+    console.log(`   Claves disponibles: [${Object.keys(allowedProfessionals).join(', ')}]`);
   }
   return true;
 };
@@ -117,9 +138,28 @@ const Professionals: React.FC<ProfessionalsProps> = ({
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
+        console.log('🚀 Iniciando fetchDoctors para serviceId:', serviceId, 'serviceChoice:', serviceChoice);
         const data = await getDoctors(serviceId);
         console.log('📋 Todos los doctores recibidos de la API:', data);
+        console.log('📋 Cantidad de doctores recibidos:', data?.length || 0);
         console.log('🔍 Especialidad actual:', serviceChoice);
+        console.log('🔍 Tipo de data:', typeof data, '¿Es array?:', Array.isArray(data));
+        
+        // Validar que data sea un array antes de procesarlo
+        if (!Array.isArray(data)) {
+          console.error('❌ Error: La respuesta no es un array:', data);
+          console.error('❌ Tipo de data:', typeof data);
+          console.error('❌ Contenido completo:', JSON.stringify(data, null, 2));
+          setProfessionalOptions([]);
+          return;
+        }
+        
+        if (data.length === 0) {
+          console.warn('⚠️ No se recibieron doctores de la API');
+          setProfessionalOptions([]);
+          setLoading(false);
+          return;
+        }
         
         // Filtrar doctores según la especialidad
         const filteredData = data.filter((doctor: {
@@ -148,61 +188,46 @@ const Professionals: React.FC<ProfessionalsProps> = ({
             fullRaw: doctor
           });
           
-          const normalizedServiceChoice = normalizeName(serviceChoice || '');
-          
-          // Para Andrología y Ginecología: mostrar TODOS los doctores que vienen de la API
-          // (sin filtrado por nombre, ya que los nombres pueden cambiar en DriCloud)
-          if (normalizedServiceChoice.includes('andrologia') || 
-              normalizedServiceChoice.includes('medicinasexual') ||
-              normalizedServiceChoice.includes('ginecologia')) {
-            console.log(`✅ Doctor permitido para "${serviceChoice}": "${fullName}" (ID: ${doctorId}) - mostrando todos los doctores de la API`);
-            return true;
-          }
-          
-          // Filtro especial para Psicología: preferir Jasmina García Velázquez, pero mostrar todos si no se encuentra
-          // (esto hace el filtro más flexible ya que los nombres pueden variar en DriCloud)
-          if (normalizedServiceChoice.includes('psicologia') && !normalizedServiceChoice.includes('fisioterapia')) {
-            // Por ahora, mostrar todos los doctores de Psicología que vengan de la API
-            // El filtro específico de Jasmina se puede reactivar si es necesario
-            console.log(`✅ Doctor permitido para Psicología: "${fullName}" (ID: ${doctorId}) - mostrando todos los doctores de la API`);
-            return true;
-          }
-          
-          // Para Fisioterapia: mostrar todos los profesionales que devuelve la API (sin Jasmina)
-          if (normalizedServiceChoice.includes('fisioterapia')) {
-            // Excluir explícitamente a Jasmina
-            const normalizedDoctor = normalizeName(fullName);
-            const normalizedFirstName = normalizeName(firstName);
-            const normalizedLastName = normalizeName(lastName);
-            
-            const hasJasmina = normalizedFirstName.includes('jasmina') || normalizedDoctor.includes('jasmina');
-            const hasGarcia = normalizedLastName.includes('garcia') || normalizedDoctor.includes('garcia');
-            const hasVelazquez = normalizedLastName.includes('velazquez') || normalizedDoctor.includes('velazquez');
-            const isJasmina = hasJasmina && (hasGarcia || hasVelazquez);
-            
-            if (isJasmina) {
-              console.log(`❌ Doctor filtrado para Fisioterapia: "${fullName}" (ID: ${doctorId}) - es Jasmina (pertenece a Psicología)`);
-              return false;
-            }
-            
-            // Permitir todos los demás profesionales para Fisioterapia
-            console.log(`✅ Doctor permitido para Fisioterapia: "${fullName}" (ID: ${doctorId})`);
-            return true;
-          }
-          
-          // Para otras especialidades, usar el filtro normal
+          // Para todas las especialidades, usar el filtro específico de la lista blanca
           const isAllowed = isDoctorAllowed(fullName, serviceChoice);
           
           if (!isAllowed) {
             console.log(`❌ Doctor filtrado: "${fullName}" (ID: ${doctorId}) - no permitido para "${serviceChoice}"`);
           } else {
-            console.log(`✅ Doctor permitido: "${fullName}" (ID: ${doctorId})`);
+            console.log(`✅ Doctor permitido: "${fullName}" (ID: ${doctorId}) para "${serviceChoice}"`);
           }
           
           return isAllowed;
         });
         
         console.log('✅ Doctores filtrados:', filteredData);
+        console.log('📊 Estadísticas de filtrado:', {
+          totalRecibidos: data.length,
+          totalFiltrados: filteredData.length,
+          especialidad: serviceChoice,
+          doctoresPermitidos: filteredData.map(d => {
+            const firstName = (d.name || d.USU_NOMBRE || '').trim();
+            const lastName = (d.surname || d.USU_APELLIDOS || '').trim();
+            return `${firstName} ${lastName}`.trim();
+          })
+        });
+        
+        if (filteredData.length === 0) {
+          console.warn('⚠️ ⚠️ ⚠️ NINGÚN DOCTOR PASÓ EL FILTRO ⚠️ ⚠️ ⚠️');
+          console.warn('⚠️ Esto puede significar que:');
+          console.warn('   1. Los nombres de los doctores no coinciden con allowedProfessionals');
+          console.warn('   2. La especialidad no tiene restricciones configuradas pero el filtro está bloqueando');
+          console.warn('   3. Los nombres están vacíos o mal formateados');
+          console.warn('📋 Doctores recibidos (para comparar):', data.map(d => {
+            const firstName = (d.name || d.USU_NOMBRE || '').trim();
+            const lastName = (d.surname || d.USU_APELLIDOS || '').trim();
+            return {
+              fullName: `${firstName} ${lastName}`.trim(),
+              normalized: normalizeName(`${firstName} ${lastName}`.trim()),
+              raw: d
+            };
+          }));
+        }
         
         const doctors = filteredData.map(
           (doctor: {
@@ -265,16 +290,32 @@ const Professionals: React.FC<ProfessionalsProps> = ({
             }
             
             // Usar el componente DoctorImage que maneja el fallback automáticamente
+            // Pasar el nombre completo para búsqueda por nombre si no se encuentra por ID
+            // Usar el nombre sin "Dr" para la búsqueda, ya que el mapeo está por nombre completo
+            const fullName = `${firstName} ${lastName}`.trim();
+            const fullNameForSearch = fullName.toLowerCase().trim(); // Nombre normalizado para búsqueda
             const photo = (
               <div className="w-full h-full rounded-full overflow-hidden">
                 <DoctorImage
                   doctorId={doctorId}
                   dricloudImage={doctor.FotoPerfil}
-                  alt={`${firstName} ${lastName}`}
+                  alt={fullName || 'Doctor'}
                   className="w-full h-full object-cover"
+                  doctorName={fullNameForSearch}
                 />
               </div>
             );
+            
+            // Log adicional para debugging de imágenes
+            console.log(`🖼️ Preparando imagen para: ${displayName}`, {
+              doctorId,
+              firstName,
+              lastName,
+              fullName,
+              fullNameForSearch,
+              hasFotoPerfil: !!doctor.FotoPerfil,
+              fotoPerfilLength: doctor.FotoPerfil?.length || 0
+            });
             
             // Log para debugging
             console.log(`👤 Doctor procesado: ${displayName} (ID: ${doctorId}, firstName: "${firstName}", lastName: "${lastName}")`);

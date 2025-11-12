@@ -8,14 +8,30 @@ cd packages/widget
 npm install
 ```
 
-### 2. Levantar el servidor de desarrollo
+### 2. Configurar variables de entorno (SOLO LA PRIMERA VEZ)
 ```bash
+# Copiar el archivo de ejemplo
+cp .env.development.example .env.development
+
+# El archivo ya tiene los valores correctos, pero puedes editarlo si necesitas cambiar la URL
+```
+
+**⚠️ IMPORTANTE:** Sin este archivo, el widget intentará conectarse a `localhost:3000` (que no existe) y no funcionará.
+
+### 3. Levantar el servidor de desarrollo
+```bash
+# Opción 1: Usar el script mejorado (recomendado)
+./start-dev.sh
+
+# Opción 2: Usar npm directamente
 npm run dev
 ```
 
 El servidor se levantará en: **http://localhost:5173**
 
-### 3. Abrir en el navegador
+**✅ El script `start-dev.sh` verifica automáticamente que `.env.development` existe y te ayuda a crearlo si falta.**
+
+### 4. Abrir en el navegador
 - Abre: http://localhost:5173
 - El widget se recargará automáticamente cuando hagas cambios (Hot Module Replacement)
 
@@ -30,7 +46,12 @@ VITE_GUA_SERVICE_URL=https://ybymfv93yg.execute-api.eu-north-1.amazonaws.com/pro
 
 # Para usar el backend local (si lo tienes corriendo)
 VITE_GUA_SERVICE_URL=http://localhost:3000
+
+# Para usar otro entorno (dev, pre, etc.)
+VITE_GUA_SERVICE_URL=https://tu-api-gateway-url.execute-api.eu-north-1.amazonaws.com/dev
 ```
+
+**💡 Tip:** Una vez configurado, este archivo persiste entre sesiones. No necesitas volver a configurarlo cada vez que reinicias el servidor.
 
 ### Variables de Entorno Disponibles
 

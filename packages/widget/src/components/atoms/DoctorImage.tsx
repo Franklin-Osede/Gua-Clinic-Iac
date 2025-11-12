@@ -6,6 +6,7 @@ interface DoctorImageProps {
   dricloudImage?: string;
   alt: string;
   className?: string;
+  doctorName?: string; // Nombre del doctor para búsqueda por nombre
 }
 
 /**
@@ -13,7 +14,7 @@ interface DoctorImageProps {
  * 
  * Orden de prioridad:
  * 1. Imagen de DriCloud (si está disponible y carga correctamente)
- * 2. Imagen local del doctor (si existe en el mapeo)
+ * 2. Imagen local del doctor (si existe en el mapeo por ID o nombre)
  * 3. Placeholder genérico
  */
 const DoctorImage: React.FC<DoctorImageProps> = ({
@@ -21,11 +22,17 @@ const DoctorImage: React.FC<DoctorImageProps> = ({
   dricloudImage,
   alt,
   className = 'w-full h-full object-cover',
+  doctorName,
 }) => {
   const [imageError, setImageError] = useState(false);
   const [fallbackError, setFallbackError] = useState(false);
   
-  const localImagePath = getDoctorImagePath(doctorId);
+  const localImagePath = getDoctorImagePath(doctorId, doctorName);
+  
+  // Log para debugging
+  if (doctorName) {
+    console.log(`🖼️ DoctorImage - ID: ${doctorId}, Nombre: "${doctorName}", FotoPerfil: ${dricloudImage ? 'Sí' : 'No'}, LocalPath: ${localImagePath || 'No'}`);
+  }
   
   // Si hay imagen de DriCloud y no ha fallado, intentar usarla
   if (dricloudImage && dricloudImage.trim() !== '' && !imageError) {

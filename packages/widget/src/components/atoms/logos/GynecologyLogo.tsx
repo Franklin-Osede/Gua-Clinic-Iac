@@ -5,14 +5,14 @@ interface GynecologyLogoProps {
 }
 
 export const GynecologyLogo: FC<GynecologyLogoProps> = ({ disabled }) => {
-  const [dimensions, setDimensions] = useState({ width: 48, height: 40 });
+  const [dimensions, setDimensions] = useState({ width: 112, height: 112 });
 
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth <= 480) {
-        setDimensions({ width: 38, height: 38 });
+        setDimensions({ width: 80, height: 80 });
       } else {
-        setDimensions({ width: 48, height: 40 });
+        setDimensions({ width: 112, height: 112 });
       }
     };
 

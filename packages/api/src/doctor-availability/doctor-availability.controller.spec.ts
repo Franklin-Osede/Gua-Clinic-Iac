@@ -36,7 +36,7 @@ describe('DoctorAvailabilityController', () => {
       service.getDoctorAgenda.mockResolvedValue(expectedResult);
 
       // Act
-      const result = await controller.getDoctorAgenda(doctorId, startDate, datesToFetch);
+      const result = await controller.getDoctorAgenda(String(doctorId), startDate, datesToFetch);
 
       // Assert
       expect(service.getDoctorAgenda).toHaveBeenCalledWith(doctorId, startDate, datesToFetch);
@@ -52,7 +52,7 @@ describe('DoctorAvailabilityController', () => {
       service.getDoctorAgenda.mockResolvedValue(expectedResult);
 
       // Act
-      const result = await controller.getDoctorAgenda(doctorId, startDate);
+      const result = await controller.getDoctorAgenda(String(doctorId), startDate);
 
       // Assert
       expect(service.getDoctorAgenda).toHaveBeenCalledWith(doctorId, startDate, 31);

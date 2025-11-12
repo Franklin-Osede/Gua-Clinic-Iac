@@ -5,14 +5,14 @@ interface AndrologyLogoProps {
 }
 
 export const AndrologyLogo: FC<AndrologyLogoProps> = ({ disabled }) => {
-  const [dimensions, setDimensions] = useState({ width: 40, height: 42 });
+  const [dimensions, setDimensions] = useState({ width: 112, height: 112 });
 
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth <= 480) {
-        setDimensions({ width: 35, height: 35 });
+        setDimensions({ width: 80, height: 80 });
       } else {
-        setDimensions({ width: 40, height: 42 });
+        setDimensions({ width: 112, height: 112 });
       }
     };
 

@@ -5,14 +5,14 @@ interface PsychologyLogoProps {
 }
 
 export const PsychologyLogo: FC<PsychologyLogoProps> = ({ disabled }) => {
-  const [dimensions, setDimensions] = useState({ width: 34, height: 40 });
+  const [dimensions, setDimensions] = useState({ width: 112, height: 112 });
 
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth <= 480) {
-        setDimensions({ width: 30, height: 30 });
+        setDimensions({ width: 80, height: 80 });
       } else {
-        setDimensions({ width: 34, height: 40 });
+        setDimensions({ width: 112, height: 112 });
       }
     };
 

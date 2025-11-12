@@ -39,14 +39,14 @@ const ServiceCardOption: React.FC<ServiceCardProps> = ({
   const cardStyle: React.CSSProperties = {
     width: '100%',
     maxWidth: '170px',
-    height: '128px',
+    height: '150px',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'space-evenly',
+    justifyContent: 'flex-start',
     border: '1px solid',
     borderRadius: '16px',
-    padding: '8px',
+    padding: '24px 8px 8px 8px',
     boxSizing: 'border-box',
     backgroundColor: isActive ? '#FDF9E6' : (isInitial ? '#FFFFFF' : '#FFFFFF'),
     borderColor: isActive ? '#EAC607' : '#DDDDDD',
@@ -62,11 +62,22 @@ const ServiceCardOption: React.FC<ServiceCardProps> = ({
     fontSize: '12px',
     fontWeight: 500,
     maxWidth: '90%',
-    margin: '0',
+    margin: '0 0 10px 0',
+    paddingTop: '0',
     lineHeight: '1.2',
     wordWrap: 'break-word',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+    flexShrink: 0,
+  };
+
+  const logoContainerStyle: React.CSSProperties = {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    minHeight: 0,
   };
 
   return (
@@ -92,7 +103,9 @@ const ServiceCardOption: React.FC<ServiceCardProps> = ({
       >
         {name}
       </h3>
-      {renderLogo()}
+      <div style={logoContainerStyle}>
+        {renderLogo()}
+      </div>
     </div>
   );
 };

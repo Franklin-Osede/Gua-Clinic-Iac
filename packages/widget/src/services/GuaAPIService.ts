@@ -70,20 +70,54 @@ export const initializeSession = async () => {
 export const getMedicalSpecialties = async (refresh: boolean = false) => {
   try {
     const url = refresh ? `/medical-specialties?refresh=true` : `/medical-specialties`;
+    console.log(`🌐 Llamando a: ${getApiBaseUrl()}${url}`);
+    
     const response = await apiClient.get(url);
+    console.log(`✅ Respuesta de /medical-specialties:`, response.status, response.data);
+    
+    // Si la respuesta tiene un mensaje de error, loguearlo
+    if (response.data?.message) {
+      console.error(`❌ API devolvió mensaje de error:`, response.data.message);
+      // Si es 503, devolver array vacío en lugar de crashear
+      if (response.status === 503 || response.data.message.includes('Unavailable')) {
+        console.warn('⚠️ Backend no disponible (503), devolviendo array vacío');
+        return [];
+      }
+    }
+    
     // El backend ahora devuelve directamente un array de especialidades
     // Manejar tanto array directo como estructura antigua
     if (Array.isArray(response.data)) {
+      console.log(`✅ Respuesta es array con ${response.data.length} especialidades`);
       return response.data;
     } else if (response.data.Data?.Especialidades) {
+      console.log(`✅ Respuesta tiene Data.Especialidades con ${response.data.Data.Especialidades.length} especialidades`);
       return response.data.Data.Especialidades;
     } else if (response.data.Especialidades) {
+      console.log(`✅ Respuesta tiene Especialidades con ${response.data.Especialidades.length} especialidades`);
       return response.data.Especialidades;
     }
+    
+    console.warn('⚠️ Formato de respuesta no reconocido, devolviendo array vacío');
     return [];
-  } catch (error) {
-    console.error("Error fetching medical specialties data:", error);
-    throw error;
+  } catch (error: any) {
+    console.error("❌ Error fetching medical specialties data:", error);
+    console.error("❌ Error details:", {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data,
+      url: error.config?.url
+    });
+    
+    // Si es un error 503, devolver array vacío en lugar de lanzar error
+    if (error.response?.status === 503) {
+      console.warn('⚠️ Backend no disponible (503), devolviendo array vacío');
+      return [];
+    }
+    
+    // Para otros errores, también devolver array vacío para que el UI no crashee
+    console.warn('⚠️ Error al obtener especialidades, devolviendo array vacío');
+    return [];
   }
 };
 
@@ -110,11 +144,61 @@ export const getDoctors = async (serviceId: number) => {
 
   try {
     const response = await apiClient.get(`/doctors/${serviceId}`);
-    // El backend ahora devuelve directamente un array [{ doctor_id, name, surname, ... }]
-    // Mantenemos compatibilidad con el formato antiguo por si acaso
-    return Array.isArray(response.data) 
-      ? response.data 
-      : (response.data.Data || response.data.Doctores || []);
+    
+    console.log('📥 Respuesta completa de la API /doctors:', response.data);
+    console.log('📥 Tipo de respuesta:', typeof response.data);
+    console.log('📥 ¿Es array?:', Array.isArray(response.data));
+    
+    // Validar que la respuesta no sea un error
+    // Si la respuesta tiene un campo "message" y no es un array, probablemente es un error
+    if (response.data?.message && !Array.isArray(response.data)) {
+      console.error("❌ Error response from API:", response.data);
+      throw new Error(response.data.message || "Service Unavailable");
+    }
+    
+    // El backend debería devolver directamente un array [{ doctor_id, name, surname, ... }]
+    // Pero también manejamos el caso donde viene la estructura completa de DriCloud
+    let doctors: any[] = [];
+    
+    if (Array.isArray(response.data)) {
+      // Caso ideal: el backend ya transformó y devolvió un array
+      doctors = response.data;
+      console.log('✅ Respuesta es array directo con', doctors.length, 'doctores');
+    } else if (response.data?.Data) {
+      // Caso: estructura DriCloud { Successful: true, Data: { Doctores: [...] } }
+      if (Array.isArray(response.data.Data)) {
+        doctors = response.data.Data;
+        console.log('✅ Respuesta tiene Data como array con', doctors.length, 'doctores');
+      } else if (response.data.Data.Doctores && Array.isArray(response.data.Data.Doctores)) {
+        doctors = response.data.Data.Doctores;
+        console.log('✅ Respuesta tiene Data.Doctores con', doctors.length, 'doctores');
+      } else if (response.data.Data.Doctores && !Array.isArray(response.data.Data.Doctores)) {
+        // Si Doctores no es un array, podría ser un objeto único
+        doctors = [response.data.Data.Doctores];
+        console.log('⚠️ Doctores es un objeto único, convertido a array');
+      }
+    } else if (response.data?.Doctores) {
+      // Caso: estructura directa { Doctores: [...] }
+      if (Array.isArray(response.data.Doctores)) {
+        doctors = response.data.Doctores;
+        console.log('✅ Respuesta tiene Doctores directo con', doctors.length, 'doctores');
+      } else {
+        doctors = [response.data.Doctores];
+        console.log('⚠️ Doctores es un objeto único, convertido a array');
+      }
+    }
+    
+    // Validar que sea un array antes de devolver
+    if (!Array.isArray(doctors)) {
+      console.error("❌ Invalid response format, expected array:", response.data);
+      console.error("❌ Doctors extracted:", doctors);
+      throw new Error("Invalid response format from API");
+    }
+    
+    console.log('✅ Doctores finales a devolver:', doctors.length, 'doctores');
+    console.log('📋 Primer doctor (muestra):', doctors[0]);
+    
+    return doctors;
   } catch (error) {
     console.error("Error fetching doctors data:", error);
     throw error;

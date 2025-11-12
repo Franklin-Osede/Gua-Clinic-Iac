@@ -14,62 +14,129 @@ const Services: React.FC<ServicePageProps> = ({
   initialCard,
   onCardClick,
 }) => {
+  // ⚠️ LOG MUY VISIBLE para verificar que el componente se monta
+  console.log('🚀🚀🚀 SERVICES COMPONENT MONTADO 🚀🚀🚀');
+  console.log('🚀🚀🚀 SERVICES COMPONENT MONTADO 🚀🚀🚀');
+  console.log('🚀🚀🚀 SERVICES COMPONENT MONTADO 🚀🚀🚀');
+  
   const [serviceOptions, setServiceOptions] = useState<
     { name: string; id: number }[]
   >([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    console.log('🔄 Services useEffect triggered');
     const fetchServices = async (forceRefresh: boolean = false) => {
       try {
+        console.log('🔍 Fetching medical specialties...', forceRefresh ? '(FORCE REFRESH)' : '');
         const data = await getMedicalSpecialties(forceRefresh);
+        console.log('📦 Datos brutos recibidos de la API:', data);
+        console.log('📦 Tipo de data:', typeof data);
+        console.log('📦 ¿Es array?:', Array.isArray(data));
+        console.log('📊 Total de especialidades recibidas:', Array.isArray(data) ? data.length : 0);
         
-        // Especialidades a excluir
-        const excludedSpecialties = [
-          'Oncología',
-          'Oncologia',
-          'Enfermería',
-          'Enfermeria',
-          'Anestesiología',
-          'Anestesiologia',
-        ];
-        
-        // Filtrar y formatear especialidades
-        const formattedOptions = data
-          .filter((specialty: { name: string; id: number }) => {
-            const name = specialty.name.trim();
-            return !excludedSpecialties.some(excluded => 
-              name.toLowerCase() === excluded.toLowerCase()
-            );
-          })
-          .map((specialty: { name: string; id: number }) => ({
-            id: specialty.id,
-            name:
-              specialty.name === "Andrología"
-                ? "Andrología y medicina sexual"
-                : specialty.name === "Psicología" || specialty.name === "Psicologia"
-                ? "Psicología" // Mantener el nombre original de Psicología
-                : specialty.name,
-          }));
-        
-        console.log('✅ Especialidades filtradas:', formattedOptions);
-        
-        // Si solo hay 2 especialidades o menos, puede ser un problema de caché
-        // (especialmente si son "Consultas generales" y "Emergencias")
-        if (formattedOptions.length <= 2 && !forceRefresh) {
-          const names = formattedOptions.map(s => s.name.toLowerCase());
-          const suspiciousNames = ['consulta general', 'emergencia', 'consultas generales', 'emergencias'];
-          const isSuspicious = names.some(name => 
-            suspiciousNames.some(suspicious => name.includes(suspicious))
-          );
-          
-          if (isSuspicious) {
-            console.warn('⚠️ Solo se encontraron 2 especialidades sospechosas. Forzando recarga desde DriCloud...');
-            // Recargar con refresh forzado
-            return fetchServices(true);
-          }
+        // ⚠️ VALIDACIÓN CRÍTICA: Asegurar que data sea un array
+        if (!Array.isArray(data)) {
+          console.error('❌ ERROR CRÍTICO: data no es un array!', data);
+          setServiceOptions([]);
+          setLoading(false);
+          return;
         }
         
+        if (data.length === 0) {
+          console.warn('⚠️ ADVERTENCIA: La API devolvió un array vacío');
+          setServiceOptions([]);
+          setLoading(false);
+          return;
+        }
+        
+        // ⚠️ FILTRO SIMPLE Y DIRECTO: SOLO estas 6 especialidades
+        // Lista de palabras clave que deben estar en el nombre (sin acentos, minúsculas)
+        const normalize = (str: string) => str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '').replace(/^\d+\.?\s*/g, '');
+        
+        const allowedKeywords = [
+          'urologia',
+          'andrologia', 
+          'medicinasexual',
+          'fisioterapia',
+          'medicinafisica',
+          'rehabilitacion',
+          'ginecologia',
+          'medicinaintegrativa',
+          'medicinapreventiva'
+        ];
+        
+        const nameMapping: Record<string, string> = {
+          'urologia': 'Urología',
+          'andrologia': 'Andrología y medicina sexual',
+          'medicinasexual': 'Andrología y medicina sexual',
+          'fisioterapia': 'Fisioterapia',
+          'medicinafisica': 'Medicina Rehabilitadora',
+          'rehabilitacion': 'Medicina Rehabilitadora',
+          'ginecologia': 'Ginecología',
+          'medicinaintegrativa': 'Medicina Integrativa',
+          'medicinapreventiva': 'Medicina Integrativa'
+        };
+        
+        console.log('🔍 FILTRO SIMPLE: Solo permitir estas palabras clave:', allowedKeywords);
+        
+        const formattedOptions = data
+          .filter((specialty: { name: string; id: number }) => {
+            const originalName = specialty.name.trim();
+            const normalized = normalize(originalName);
+            
+            console.log(`  🔍 "${originalName}" → normalizado: "${normalized}"`);
+            
+            // Verificar si el nombre normalizado contiene alguna palabra clave permitida
+            const matches = allowedKeywords.some(keyword => {
+              if (normalized.includes(keyword)) {
+                console.log(`    ✅ MATCH: "${normalized}" contiene "${keyword}"`);
+                return true;
+              }
+              return false;
+            });
+            
+            if (!matches) {
+              console.log(`    🚫 BLOQUEADO: "${originalName}" no contiene ninguna palabra clave permitida`);
+              return false;
+            }
+            
+            return true;
+          })
+          .map((specialty: { name: string; id: number }) => {
+            const originalName = specialty.name.trim();
+            const normalized = normalize(originalName);
+            
+            // Buscar qué palabra clave coincide para determinar el nombre a mostrar
+            let displayName = originalName.replace(/^\d+\.?\s*/g, '').trim(); // Por defecto, quitar prefijo numérico
+            
+            // Buscar el match más específico (más largo primero)
+            const sortedKeywords = allowedKeywords.sort((a, b) => b.length - a.length);
+            for (const keyword of sortedKeywords) {
+              if (normalized.includes(keyword) && nameMapping[keyword]) {
+                displayName = nameMapping[keyword];
+                console.log(`    📝 Mapeando "${originalName}" → "${displayName}" (keyword: "${keyword}")`);
+                break;
+              }
+            }
+            
+            return {
+              id: specialty.id,
+              name: displayName,
+            };
+          });
+        
+        console.log('✅ Especialidades filtradas:', formattedOptions);
+        console.log(`📊 Total de especialidades después del filtro: ${formattedOptions.length}`);
+        
+        // ⚠️ ADVERTENCIA si no hay especialidades después del filtro
+        if (formattedOptions.length === 0) {
+          console.error('❌ ERROR: El filtro bloqueó TODAS las especialidades!');
+          console.error('❌ Esto significa que NINGUNA especialidad de la API coincide con la lista blanca');
+          console.error('❌ Revisa los logs anteriores para ver qué nombres vienen de la API');
+        }
+        
+        // Establecer las especialidades filtradas
         setServiceOptions(formattedOptions);
       } catch (error) {
         console.error("Error fetching medical specialties:", error);
@@ -126,6 +193,15 @@ const Services: React.FC<ServicePageProps> = ({
             {loading ? (
               <div className="flex justify-center items-center col-span-2 mt-8">
                 <PuffLoader size={30} color={"#9CA3AF"} loading={loading} />
+              </div>
+            ) : serviceOptions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center col-span-2 mt-8" style={{ padding: '20px', textAlign: 'center' }}>
+                <p style={{ color: '#9DABAF', fontSize: '14px', marginBottom: '8px' }}>
+                  No hay especialidades disponibles en este momento
+                </p>
+                <p style={{ color: '#9DABAF', fontSize: '12px' }}>
+                  Por favor, intenta más tarde
+                </p>
               </div>
             ) : (
               serviceOptions.map((service, index) => (
