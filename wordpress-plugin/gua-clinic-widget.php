@@ -24,6 +24,73 @@ class GuaClinicWidget {
     public function init() {
         // Registrar shortcode
         add_shortcode('gua_clinic_widget', array($this, 'render_widget'));
+        
+        // Registrar bloque Gutenberg para facilitar el uso
+        $this->register_gutenberg_block();
+    }
+    
+    /**
+     * Registra un bloque Gutenberg reutilizable para el widget
+     * Esto permite que los editores inserten el widget sin memorizar el shortcode
+     * El bloque usa el shortcode estándar de WordPress para renderizar
+     */
+    private function register_gutenberg_block() {
+        // Solo registrar si Gutenberg está disponible (WordPress 5.0+)
+        if (!function_exists('register_block_type')) {
+            return;
+        }
+        
+        // Registrar bloque dinámico que renderiza el shortcode
+        register_block_type('gua-clinic/widget', array(
+            'attributes' => array(
+                'locale' => array(
+                    'type' => 'string',
+                    'default' => 'es',
+                ),
+                'theme' => array(
+                    'type' => 'string',
+                    'default' => 'light',
+                ),
+                'api_url' => array(
+                    'type' => 'string',
+                    'default' => 'https://ybymfv93yg.execute-api.eu-north-1.amazonaws.com/prod',
+                ),
+            ),
+            'render_callback' => array($this, 'render_gutenberg_block'),
+            'category' => 'widgets',
+            'title' => 'GUA Clinic Widget',
+            'description' => 'Inserta el widget de citas médicas GUA Clinic',
+            'icon' => 'calendar-alt',
+            'keywords' => array('citas', 'widget', 'gua', 'clinic'),
+        ));
+    }
+    
+    /**
+     * Renderiza el bloque Gutenberg (usa el mismo shortcode internamente)
+     * Esto asegura que el bloque siempre use la misma lógica que el shortcode
+     */
+    public function render_gutenberg_block($attributes) {
+        // Construir atributos del shortcode
+        $shortcode_atts = array();
+        if (!empty($attributes['locale'])) {
+            $shortcode_atts[] = 'locale="' . esc_attr($attributes['locale']) . '"';
+        }
+        if (!empty($attributes['theme'])) {
+            $shortcode_atts[] = 'theme="' . esc_attr($attributes['theme']) . '"';
+        }
+        if (!empty($attributes['api_url'])) {
+            $shortcode_atts[] = 'api_url="' . esc_attr($attributes['api_url']) . '"';
+        }
+        
+        // Construir el shortcode completo
+        $shortcode = '[gua_clinic_widget';
+        if (!empty($shortcode_atts)) {
+            $shortcode .= ' ' . implode(' ', $shortcode_atts);
+        }
+        $shortcode .= ']';
+        
+        // Renderizar el shortcode (esto carga los scripts automáticamente)
+        return do_shortcode($shortcode);
     }
     
     /**

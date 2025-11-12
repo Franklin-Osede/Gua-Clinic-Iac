@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => {
       console.warn('⚠️  ADVERTENCIA: VITE_GUA_SERVICE_URL no está configurada');
       console.warn('   Crea un archivo .env.development con:');
       console.warn('   VITE_GUA_SERVICE_URL=https://ybymfv93yg.execute-api.eu-north-1.amazonaws.com/prod');
-      console.warn('   O ejecuta: cp .env.development.example .env.development');
+      console.warn('   O ejecuta: cp .env.dev .env.development');
     } else {
       console.log('✅ API URL configurada:', apiUrl);
     }

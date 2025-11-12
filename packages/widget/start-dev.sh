@@ -12,21 +12,21 @@ echo ""
 
 # Verificar si existe .env.development
 ENV_FILE=".env.development"
-ENV_EXAMPLE=".env.development.example"
+ENV_TEMPLATE=".env.dev"
 
 if [ ! -f "$ENV_FILE" ]; then
     echo -e "${YELLOW}⚠️  Archivo .env.development no encontrado${NC}"
     echo ""
     
-    if [ -f "$ENV_EXAMPLE" ]; then
-        echo -e "${BLUE}📋 Copiando .env.development.example a .env.development...${NC}"
-        cp "$ENV_EXAMPLE" "$ENV_FILE"
+    if [ -f "$ENV_TEMPLATE" ]; then
+        echo -e "${BLUE}📋 Copiando .env.dev a .env.development...${NC}"
+        cp "$ENV_TEMPLATE" "$ENV_FILE"
         echo -e "${GREEN}✅ Archivo .env.development creado${NC}"
         echo ""
         echo -e "${YELLOW}💡 IMPORTANTE: Revisa y edita .env.development con tus valores reales${NC}"
         echo ""
     else
-        echo -e "${RED}❌ ERROR: No se encontró .env.development ni .env.development.example${NC}"
+        echo -e "${RED}❌ ERROR: No se encontró .env.development ni .env.dev${NC}"
         echo ""
         echo "Por favor, crea un archivo .env.development con:"
         echo "  VITE_GUA_SERVICE_URL=https://ybymfv93yg.execute-api.eu-north-1.amazonaws.com/prod"

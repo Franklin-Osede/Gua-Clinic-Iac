@@ -355,15 +355,40 @@ const Professionals: React.FC<ProfessionalsProps> = ({
         console.log('✅ Doctores procesados para mostrar:', doctors);
         console.log(`📊 Total de doctores a mostrar: ${doctors.length}`);
         setProfessionalOptions(doctors);
-      } catch (error) {
+      } catch (error: any) {
+        console.error("❌ ========== ERROR EN fetchDoctors ==========");
         console.error("❌ Error fetching doctors:", error);
+        console.error("❌ Error type:", error?.constructor?.name);
+        console.error("❌ Error message:", error?.message);
+        console.error("❌ Error stack:", error?.stack);
+        
+        // Si es un error de timeout
+        if (error?.code === 'ECONNABORTED' || error?.message?.includes('timeout')) {
+          console.error("❌ TIMEOUT: La petición tardó más de 60 segundos");
+        }
+        
+        // Si es un error de red
+        if (!error?.response) {
+          console.error("❌ ERROR DE RED: No hay respuesta del servidor");
+          console.error("❌ Posibles causas:");
+          console.error("   1. CORS bloqueado por el navegador");
+          console.error("   2. El servidor no está respondiendo");
+          console.error("   3. Problema de conectividad");
+        }
+        
+        console.error("❌ ========================================");
         setProfessionalOptions([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDoctors().then();
+    fetchDoctors().catch((error) => {
+      // Capturar errores no manejados en la promesa
+      console.error("❌ ERROR NO MANEJADO en fetchDoctors promise:", error);
+      setProfessionalOptions([]);
+      setLoading(false);
+    });
   }, [serviceId, serviceChoice]);
 
   return (
@@ -381,13 +406,14 @@ const Professionals: React.FC<ProfessionalsProps> = ({
           {serviceChoice}
         </div>
         <h1 className="text-center" style={{
-          fontSize: '22px',
+          fontSize: typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? '18px' : '22px',
           fontWeight: 600,
           color: '#242424',
           textAlign: 'center',
-          margin: '0',
+          margin: '0 auto',
           letterSpacing: '-0.2px',
-          lineHeight: '1.3'
+          lineHeight: '1.3',
+          maxWidth: '90%'
         }}>
           Selecciona el profesional
         </h1>

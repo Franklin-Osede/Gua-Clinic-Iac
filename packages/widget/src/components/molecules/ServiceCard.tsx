@@ -59,10 +59,10 @@ const ServiceCardOption: React.FC<ServiceCardProps> = ({
   const textStyle: React.CSSProperties = {
     color: (!isActive && !isInitial) ? '#EFEFEF' : '#242424',
     textAlign: 'center',
-    fontSize: '12px',
+    fontSize: typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? '10px' : '12px',
     fontWeight: 500,
     maxWidth: '90%',
-    margin: '0 0 10px 0',
+    margin: '0 auto 10px auto',
     paddingTop: '0',
     lineHeight: '1.2',
     wordWrap: 'break-word',

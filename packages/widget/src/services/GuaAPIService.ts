@@ -9,6 +9,10 @@ import { getApiBaseUrl } from "../config/api.config.ts";
 const apiClient = axios.create({
   baseURL: getApiBaseUrl(),
   withCredentials: true, // Para enviar cookies de sesión
+  timeout: 30000, // 30 segundos de timeout para evitar peticiones colgadas
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
 // Interceptor para actualizar la URL base dinámicamente y validar sesión antes de cada request
@@ -16,6 +20,10 @@ apiClient.interceptors.request.use(
   async (config) => {
     // Actualizar la URL base en cada request (por si cambió dinámicamente)
     config.baseURL = getApiBaseUrl();
+    console.log(`🔧 Interceptor request: ${config.method?.toUpperCase()} ${config.url}`, {
+      baseURL: config.baseURL,
+      withCredentials: config.withCredentials
+    });
     
     // Asegurar que tenemos una sesión válida antes de hacer el request
     try {
@@ -27,14 +35,26 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error('❌ Error en interceptor request:', error);
     return Promise.reject(error);
   }
 );
 
 // Interceptor para manejar errores de sesión
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`✅ Interceptor response: ${response.config.method?.toUpperCase()} ${response.config.url} - Status: ${response.status}`);
+    console.log(`✅ Response data type:`, typeof response.data, Array.isArray(response.data) ? 'array' : 'object');
+    console.log(`✅ Response data length:`, Array.isArray(response.data) ? response.data.length : 'N/A');
+    return response;
+  },
   async (error) => {
+    console.error(`❌ Interceptor response error: ${error.config?.method?.toUpperCase()} ${error.config?.url}`, {
+      status: error.response?.status,
+      message: error.message,
+      hasResponse: !!error.response
+    });
+    
     // Si recibimos un 401, intentar renovar sesión y reintentar
     if (error.response?.status === 401) {
       try {
@@ -70,10 +90,26 @@ export const initializeSession = async () => {
 export const getMedicalSpecialties = async (refresh: boolean = false) => {
   try {
     const url = refresh ? `/medical-specialties?refresh=true` : `/medical-specialties`;
-    console.log(`🌐 Llamando a: ${getApiBaseUrl()}${url}`);
+    const fullUrl = `${getApiBaseUrl()}${url}`;
+    console.log(`🌐 Llamando a: ${fullUrl}`);
+    console.log(`🔍 Configuración axios:`, {
+      baseURL: apiClient.defaults.baseURL,
+      withCredentials: apiClient.defaults.withCredentials,
+      headers: apiClient.defaults.headers
+    });
+    
+    console.log(`⏳ Iniciando petición GET a /medical-specialties...`);
+    const startTime = Date.now();
     
     const response = await apiClient.get(url);
-    console.log(`✅ Respuesta de /medical-specialties:`, response.status, response.data);
+    
+    const duration = Date.now() - startTime;
+    console.log(`✅ Respuesta recibida en ${duration}ms`);
+    console.log(`✅ Status:`, response.status);
+    console.log(`✅ Headers:`, response.headers);
+    console.log(`✅ Datos recibidos:`, response.data);
+    console.log(`✅ Tipo de datos:`, typeof response.data, Array.isArray(response.data) ? '(array)' : '(no array)');
+    console.log(`✅ Tamaño de datos:`, JSON.stringify(response.data).length, 'bytes');
     
     // Si la respuesta tiene un mensaje de error, loguearlo
     if (response.data?.message) {
@@ -101,13 +137,43 @@ export const getMedicalSpecialties = async (refresh: boolean = false) => {
     console.warn('⚠️ Formato de respuesta no reconocido, devolviendo array vacío');
     return [];
   } catch (error: any) {
+    console.error("❌ ========== ERROR CAPTURADO ==========");
     console.error("❌ Error fetching medical specialties data:", error);
+    console.error("❌ Error type:", error.constructor.name);
+    console.error("❌ Error message:", error.message);
     console.error("❌ Error details:", {
       message: error.message,
       status: error.response?.status,
+      statusText: error.response?.statusText,
       data: error.response?.data,
-      url: error.config?.url
+      url: error.config?.url,
+      baseURL: error.config?.baseURL,
+      headers: error.config?.headers,
+      withCredentials: error.config?.withCredentials
     });
+    
+    // Si es un error de red (sin response), mostrar más detalles
+    if (!error.response) {
+      console.error("❌ ========== ERROR DE RED ==========");
+      console.error("❌ No hay respuesta del servidor (posible CORS, timeout, o red)");
+      console.error("❌ Error code:", error.code);
+      console.error("❌ Error message:", error.message);
+      console.error("❌ Error stack:", error.stack);
+      console.error("❌ Request config:", {
+        url: error.config?.url,
+        method: error.config?.method,
+        baseURL: error.config?.baseURL,
+        timeout: error.config?.timeout,
+        withCredentials: error.config?.withCredentials
+      });
+    } else {
+      console.error("❌ ========== ERROR DEL SERVIDOR ==========");
+      console.error("❌ Status:", error.response.status);
+      console.error("❌ Status Text:", error.response.statusText);
+      console.error("❌ Response Data:", error.response.data);
+      console.error("❌ Response Headers:", error.response.headers);
+    }
+    console.error("❌ ========================================");
     
     // Si es un error 503, devolver array vacío en lugar de lanzar error
     if (error.response?.status === 503) {
@@ -143,8 +209,21 @@ export const getDoctors = async (serviceId: number) => {
   }
 
   try {
-    const response = await apiClient.get(`/doctors/${serviceId}`);
+    const url = `/doctors/${serviceId}`;
+    const fullUrl = `${getApiBaseUrl()}${url}`;
+    console.log(`🌐 Llamando a: ${fullUrl}`);
+    console.log(`⏳ Iniciando petición GET a /doctors/${serviceId}...`);
+    const startTime = Date.now();
     
+    // Aumentar timeout específicamente para doctores (60 segundos) porque puede tardar más en producción
+    const response = await apiClient.get(url, {
+      timeout: 60000, // 60 segundos para doctores
+    });
+    
+    const duration = Date.now() - startTime;
+    console.log(`✅ Respuesta recibida en ${duration}ms`);
+    console.log(`✅ Status:`, response.status);
+    console.log(`✅ Headers:`, response.headers);
     console.log('📥 Respuesta completa de la API /doctors:', response.data);
     console.log('📥 Tipo de respuesta:', typeof response.data);
     console.log('📥 ¿Es array?:', Array.isArray(response.data));
@@ -199,8 +278,34 @@ export const getDoctors = async (serviceId: number) => {
     console.log('📋 Primer doctor (muestra):', doctors[0]);
     
     return doctors;
-  } catch (error) {
-    console.error("Error fetching doctors data:", error);
+  } catch (error: any) {
+    console.error("❌ ========== ERROR CAPTURADO EN getDoctors ==========");
+    console.error("❌ Error fetching doctors data:", error);
+    console.error("❌ Error type:", error.constructor.name);
+    console.error("❌ Error message:", error.message);
+    console.error("❌ Error details:", {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      url: error.config?.url,
+      baseURL: error.config?.baseURL,
+      serviceId: serviceId
+    });
+    
+    // Si es un error de red (sin response), mostrar más detalles
+    if (!error.response) {
+      console.error("❌ ========== ERROR DE RED ==========");
+      console.error("❌ No hay respuesta del servidor (posible CORS, timeout, o red)");
+      console.error("❌ Error code:", error.code);
+      console.error("❌ Error message:", error.message);
+    } else {
+      console.error("❌ ========== ERROR DEL SERVIDOR ==========");
+      console.error("❌ Status:", error.response.status);
+      console.error("❌ Status Text:", error.response.statusText);
+      console.error("❌ Response Data:", error.response.data);
+    }
+    console.error("❌ ========================================");
     throw error;
   }
 };

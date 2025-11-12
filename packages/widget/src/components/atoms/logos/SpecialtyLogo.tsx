@@ -179,13 +179,32 @@ export const SpecialtyLogo: FC<SpecialtyLogoProps> = ({ specialtyName, disabled 
   }
   
   const FallbackComponent = logoInfo.fallback;
+  // Tamaño responsive: más pequeño en WordPress
+  const getLogoSize = () => {
+    if (typeof window !== 'undefined') {
+      // En WordPress, usar tamaño más pequeño
+      if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        return window.innerWidth <= 480 ? '48px' : '56px'; // Más pequeño en producción
+      }
+      // En localhost, tamaño normal
+      return window.innerWidth <= 480 ? '80px' : '112px';
+    }
+    return '56px'; // Default más pequeño para WordPress
+  };
+  
+  const logoSize = getLogoSize();
   const logoStyle: React.CSSProperties = {
-    width: '112px',
-    height: '112px',
+    width: logoSize,
+    height: logoSize,
+    maxWidth: logoSize,
+    maxHeight: logoSize,
+    minWidth: logoSize,
+    minHeight: logoSize,
     opacity: disabled ? 0.4 : 1,
     objectFit: 'contain',
     display: 'block',
     margin: '0 auto',
+    boxSizing: 'border-box',
   };
   
   const handleImageError = () => {
@@ -210,7 +229,34 @@ export const SpecialtyLogo: FC<SpecialtyLogoProps> = ({ specialtyName, disabled 
   // Si ya falló la carga de imagen, usar componente React directamente
   if (imageError || !imageSrc) {
     console.log(`🎨 Usando componente React para "${specialtyName}" ${imageError ? '(carga de imagen falló)' : '(sin fuente de imagen)'}`);
-    return <FallbackComponent disabled={disabled} />;
+    // Envolver en un div con estilos inline para forzar el tamaño en WordPress
+    const containerSize = getLogoSize();
+    return (
+      <div style={{
+        width: containerSize,
+        height: containerSize,
+        maxWidth: containerSize,
+        maxHeight: containerSize,
+        minWidth: containerSize,
+        minHeight: containerSize,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+        boxSizing: 'border-box',
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <FallbackComponent disabled={disabled} />
+        </div>
+      </div>
+    );
   }
   
   // Intentar cargar imagen (primero local, luego CDN si falla)

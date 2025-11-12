@@ -1,4 +1,28 @@
-# Project Template
+# GUA Clinic Widget
+
+Widget de React para sistema de citas médicas GUA Clinic. Este widget se integra en WordPress como un Web Component reutilizable.
+
+## ⚡ Inicio Rápido
+
+**IMPORTANTE:** La primera vez que clones el repositorio, debes configurar las variables de entorno:
+
+```bash
+cd packages/widget
+cp .env.dev .env.development
+```
+
+Luego inicia el servidor de desarrollo:
+
+```bash
+./start-dev.sh
+# O simplemente: npm run dev
+```
+
+**📖 Para más detalles, consulta [SETUP-COMPLETO.md](./SETUP-COMPLETO.md)**
+
+---
+
+## Project Template
 
 This repository hosts the source code for the Project Template. This project aims to serve as a starting point for future React-based projects, integrating best practices and essential libraries for rapid and effective development.
 

@@ -1,37 +1,39 @@
+import { getCdnBaseUrl } from '../config/api.config';
+
 /**
  * Mapeo de doctor_id a ruta de imagen local
  * Estas imágenes se usarán como fallback cuando la imagen de DriCloud no esté disponible
  * 
- * Fotos disponibles en public/doctors/:
- * - 50.png (Nicolas Nervo)
- * - 63.png (Andrés Vargas)
- * - Adoracion Gil.png
- * - ANDREA NOYA.png
- * - ANDRES VARGAS.png
- * - CARLOS BLANCO.png
- * - Diego Puebla.jpg
- * - Héctor Ajubita Fernández.jpg
- * - JASMINA.png
- * - MARÍA CONSUELO.png
- * - María José Suárez Herrera .jpg
- * - NICOLAS NERVO.png
- * - Pablo Juárez del Dago.jpg
- * - Francisco Juárez del Dago.jpg
+ * Fotos optimizadas disponibles en public/doctors/ (formato WebP):
+ * - 50.webp (Nicolas Nervo)
+ * - 63.webp (Andrés Vargas)
+ * - Adoracion Gil.webp
+ * - ANDREA NOYA.webp
+ * - ANDRES VARGAS.webp
+ * - CARLOS BLANCO.webp
+ * - Diego Puebla.webp
+ * - Héctor Ajubita Fernández.webp
+ * - JASMINA.webp
+ * - MARIA_CONSUELO.webp
+ * - María José Suárez Herrera.webp
+ * - NICOLAS NERVO.webp
+ * - Pablo Juárez del Dago.webp
+ * - Francisco Juárez del Dago.webp
  */
 export const doctorImageMap: Record<number, string> = {
-  3: '/doctors/3.jpg',
-  4: '/doctors/4.jpg',
-  5: '/doctors/Pablo Juárez del Dago.jpg', // Dr. Pablo Juárez
-  18: '/doctors/18.jpg',
-  20: '/doctors/JASMINA.png', // Jasmina García Velázquez - Fisioterapia/Psicología
-  24: '/doctors/CARLOS BLANCO.png', // Carlos Blanco - corregido: el archivo es CARLOS BLANCO.png, no 24.jpg
-  25: '/doctors/25.jpg',
-  26: '/doctors/26.jpg',
-  33: '/doctors/33.jpg',
-  44: '/doctors/MARIA_CONSUELO.png', // María Consuelo Calvo Garcia - Medicina Rehabilitadora (usando nombre sin caracteres especiales para compatibilidad con Vite)
-  50: '/doctors/50.png', // Nicolas Nervo Posada
-  56: '/doctors/56.jpg',
-  63: '/doctors/63.png', // Andrés Humberto Vargas Trujillo
+  3: '/doctors/3.webp',
+  4: '/doctors/4.webp',
+  5: '/doctors/Pablo Juárez del Dago.webp', // Dr. Pablo Juárez
+  18: '/doctors/18.webp',
+  20: '/doctors/JASMINA.webp', // Jasmina García Velázquez - Fisioterapia/Psicología
+  24: '/doctors/CARLOS BLANCO.webp', // Carlos Blanco
+  25: '/doctors/25.webp',
+  26: '/doctors/26.webp',
+  33: '/doctors/33.webp',
+  44: '/doctors/MARIA_CONSUELO.webp', // María Consuelo Calvo Garcia - Medicina Rehabilitadora
+  50: '/doctors/50.webp', // Nicolas Nervo Posada
+  56: '/doctors/56.webp',
+  63: '/doctors/63.webp', // Andrés Humberto Vargas Trujillo
 };
 
 /**
@@ -47,42 +49,42 @@ export const doctorImageMap: Record<number, string> = {
  * - Hector Ajubita: (foto disponible en public/doctors/)
  */
 const doctorNameMap: Record<string, string> = {
-  'nicolas nervo': '/doctors/NICOLAS NERVO.png',
-  'nicolas nervo posada': '/doctors/NICOLAS NERVO.png',
-  'andres vargas': '/doctors/ANDRES VARGAS.png',
-  'andres humberto vargas': '/doctors/ANDRES VARGAS.png',
-  'andres humberto vargas trujillo': '/doctors/ANDRES VARGAS.png',
-  'andrea noya': '/doctors/ANDREA NOYA.png',
-  'carlos blanco': '/doctors/CARLOS BLANCO.png',
-  'carlos blanco- soler palacios-pelletier': '/doctors/CARLOS BLANCO.png', // Nombre completo de DriCloud
-  'carlos blanco soler palacios pelletier': '/doctors/CARLOS BLANCO.png',
-  'jasmina': '/doctors/JASMINA.png',
-  'jasmina garcia': '/doctors/JASMINA.png',
-  'jasmina garcia velazquez': '/doctors/JASMINA.png',
-  'maria consuelo': '/doctors/MARIA_CONSUELO.png',
-  'maria consuelo calvo garcia': '/doctors/MARIA_CONSUELO.png', // Nombre completo de DriCloud
-  'maria consuelo calvo': '/doctors/MARIA_CONSUELO.png',
-  'consuelo calvo garcia': '/doctors/MARIA_CONSUELO.png',
-  'consuelo': '/doctors/MARIA_CONSUELO.png',
+  'nicolas nervo': '/doctors/NICOLAS NERVO.webp',
+  'nicolas nervo posada': '/doctors/NICOLAS NERVO.webp',
+  'andres vargas': '/doctors/ANDRES VARGAS.webp',
+  'andres humberto vargas': '/doctors/ANDRES VARGAS.webp',
+  'andres humberto vargas trujillo': '/doctors/ANDRES VARGAS.webp',
+  'andrea noya': '/doctors/ANDREA NOYA.webp',
+  'carlos blanco': '/doctors/CARLOS BLANCO.webp',
+  'carlos blanco- soler palacios-pelletier': '/doctors/CARLOS BLANCO.webp', // Nombre completo de DriCloud
+  'carlos blanco soler palacios pelletier': '/doctors/CARLOS BLANCO.webp',
+  'jasmina': '/doctors/JASMINA.webp',
+  'jasmina garcia': '/doctors/JASMINA.webp',
+  'jasmina garcia velazquez': '/doctors/JASMINA.webp',
+  'maria consuelo': '/doctors/MARIA_CONSUELO.webp',
+  'maria consuelo calvo garcia': '/doctors/MARIA_CONSUELO.webp', // Nombre completo de DriCloud
+  'maria consuelo calvo': '/doctors/MARIA_CONSUELO.webp',
+  'consuelo calvo garcia': '/doctors/MARIA_CONSUELO.webp',
+  'consuelo': '/doctors/MARIA_CONSUELO.webp',
   // Variaciones que DriCloud puede devolver (sin "Consuelo")
-  'maria calvo': '/doctors/MARIA_CONSUELO.png', // DriCloud puede devolver solo "Maria Calvo"
-  'maria calvo garcia': '/doctors/MARIA_CONSUELO.png',
-  'calvo garcia': '/doctors/MARIA_CONSUELO.png',
-  'calvo': '/doctors/MARIA_CONSUELO.png',
-  'diego puebla': '/doctors/Diego Puebla.jpg',
-  'hector ajubita': '/doctors/Héctor Ajubita Fernández.jpg',
-  'hector ajubita fernandez': '/doctors/Héctor Ajubita Fernández.jpg',
-  'maria jose suarez': '/doctors/María José Suárez Herrera .jpg',
-  'maria jose suarez herrera': '/doctors/María José Suárez Herrera .jpg',
-  'maria suarez': '/doctors/María José Suárez Herrera .jpg',
-  'adoracion gil': '/doctors/Adoracion Gil.png',
-  'adoracion gil bolanos': '/doctors/Adoracion Gil.png', // Nombre completo de DriCloud
-  'adoracion': '/doctors/Adoracion Gil.png',
-  'pablo juarez': '/doctors/Pablo Juárez del Dago.jpg',
-  'pablo juarez del dago': '/doctors/Pablo Juárez del Dago.jpg',
-  'francisco juarez': '/doctors/ Francisco Juárez del Dago.jpg',
-  'francisco juarez del dago': '/doctors/ Francisco Juárez del Dago.jpg',
-  'francisco juarez del dago pendas': '/doctors/ Francisco Juárez del Dago.jpg',
+  'maria calvo': '/doctors/MARIA_CONSUELO.webp', // DriCloud puede devolver solo "Maria Calvo"
+  'maria calvo garcia': '/doctors/MARIA_CONSUELO.webp',
+  'calvo garcia': '/doctors/MARIA_CONSUELO.webp',
+  'calvo': '/doctors/MARIA_CONSUELO.webp',
+  'diego puebla': '/doctors/Diego Puebla.webp',
+  'hector ajubita': '/doctors/Héctor Ajubita Fernández.webp',
+  'hector ajubita fernandez': '/doctors/Héctor Ajubita Fernández.webp',
+  'maria jose suarez': '/doctors/María José Suárez Herrera .webp',
+  'maria jose suarez herrera': '/doctors/María José Suárez Herrera .webp',
+  'maria suarez': '/doctors/María José Suárez Herrera .webp',
+  'adoracion gil': '/doctors/Adoracion Gil.webp',
+  'adoracion gil bolanos': '/doctors/Adoracion Gil.webp', // Nombre completo de DriCloud
+  'adoracion': '/doctors/Adoracion Gil.webp',
+  'pablo juarez': '/doctors/Pablo Juárez del Dago.webp',
+  'pablo juarez del dago': '/doctors/Pablo Juárez del Dago.webp',
+  'francisco juarez': '/doctors/ Francisco Juárez del Dago.webp', // Nota: el archivo tiene espacio al inicio
+  'francisco juarez del dago': '/doctors/ Francisco Juárez del Dago.webp',
+  'francisco juarez del dago pendas': '/doctors/ Francisco Juárez del Dago.webp',
 };
 
 /**
@@ -101,26 +103,25 @@ const normalizeName = (name: string): string => {
  * Obtiene la ruta de la imagen local para un doctor
  * @param doctorId ID del doctor
  * @param doctorName Nombre del doctor (opcional, para búsqueda por nombre)
- * @returns Ruta de la imagen o null si no existe
+ * @returns URL completa de la imagen (con CDN si está configurado) o null si no existe
  */
 export const getDoctorImagePath = (doctorId: number, doctorName?: string): string | null => {
+  let relativePath: string | null = null;
+  
   // Primero intentar por ID
   if (doctorImageMap[doctorId]) {
-    console.log(`✅ Imagen encontrada por ID ${doctorId}: ${doctorImageMap[doctorId]}`);
-    return doctorImageMap[doctorId];
-  }
-  
+    relativePath = doctorImageMap[doctorId];
+    console.log(`✅ Imagen encontrada por ID ${doctorId}: ${relativePath}`);
+  } else if (doctorName) {
   // Si no se encuentra por ID y hay nombre, intentar por nombre
-  if (doctorName) {
     const normalizedName = normalizeName(doctorName);
     console.log(`🔍 Buscando imagen por nombre: "${doctorName}" (normalizado: "${normalizedName}")`);
     
     // Búsqueda exacta primero
     if (doctorNameMap[normalizedName]) {
-      console.log(`✅ Imagen encontrada por nombre exacto: ${doctorNameMap[normalizedName]}`);
-      return doctorNameMap[normalizedName];
-    }
-    
+      relativePath = doctorNameMap[normalizedName];
+      console.log(`✅ Imagen encontrada por nombre exacto: ${relativePath}`);
+    } else {
     // Búsqueda parcial más flexible
     for (const [key, path] of Object.entries(doctorNameMap)) {
       // Verificar si alguna parte del nombre coincide
@@ -135,14 +136,32 @@ export const getDoctorImagePath = (doctorId: number, doctorName?: string): strin
       ) || normalizedName.includes(key) || key.includes(normalizedName);
       
       if (hasMatch) {
+          relativePath = path;
         console.log(`✅ Imagen encontrada por búsqueda parcial: "${key}" -> ${path}`);
-        return path;
+          break;
+        }
       }
     }
     
+    if (!relativePath) {
     console.log(`❌ No se encontró imagen para: "${doctorName}" (normalizado: "${normalizedName}")`);
+    }
   }
   
+  // Si no se encontró imagen, retornar null
+  if (!relativePath) {
   return null;
+  }
+  
+  // Construir URL completa con CDN si está configurado
+  const cdnBase = getCdnBaseUrl();
+  if (cdnBase) {
+    // Asegurar que la ruta relativa no tenga leading slash duplicado
+    const cleanPath = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
+    return `${cdnBase}${cleanPath}`;
+  }
+  
+  // En desarrollo, retornar ruta relativa
+  return relativePath;
 };
 

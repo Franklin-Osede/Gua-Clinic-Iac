@@ -1,34 +1,19 @@
-import { FC, useEffect, useState } from "react";
+import { FC } from "react";
 
 interface PsychologyLogoProps {
   disabled: boolean;
 }
 
 export const PsychologyLogo: FC<PsychologyLogoProps> = ({ disabled }) => {
-  const [dimensions, setDimensions] = useState({ width: 112, height: 112 });
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth <= 480) {
-        setDimensions({ width: 80, height: 80 });
-      } else {
-        setDimensions({ width: 112, height: 112 });
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-    handleResize();
-
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
   return (
     <svg
-      width={dimensions.width}
-      height={dimensions.height}
+      width="100%"
+      height="100%"
       viewBox="0 0 34 40"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      style={{ display: 'block', maxWidth: '100%', maxHeight: '100%' }}
+      preserveAspectRatio="xMidYMid meet"
     >
       <path
         d="M19.4349 15.7378C19.4349 15.7378 19.4821 15.7024 19.5175 15.6906C19.4349 15.36 19.4113 15.0058 19.4231 14.6162C19.3286 15.0294 19.3758 15.4427 19.4349 15.7378Z"
