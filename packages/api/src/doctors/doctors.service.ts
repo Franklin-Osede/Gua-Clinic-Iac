@@ -5,7 +5,7 @@ import { DynamoDBService } from '../database/dynamodb.service'
 @Injectable()
 export class DoctorsService {
   private readonly logger = new Logger(DoctorsService.name);
-  private readonly CACHE_TTL_MINUTES = 5; // 5 minutos (puede cambiar más frecuentemente)
+  private readonly CACHE_TTL_MINUTES = 30; // 30 minutos (doctores no cambian frecuentemente, reduce llamadas a DriCloud)
 
   constructor(
     private driCloudService: DriCloudService,

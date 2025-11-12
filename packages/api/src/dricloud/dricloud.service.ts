@@ -24,7 +24,7 @@ export class DriCloudService {
   private credentials: DriCloudCredentials | null = null;
   private readonly isMockMode: boolean;
   private readonly mockBaseUrl: string;
-  private readonly HTTP_TIMEOUT_MS = 10000; // 10 segundos timeout para evitar bloqueos
+  private readonly HTTP_TIMEOUT_MS = 25000; // 25 segundos timeout (dejando 5s de margen para HTTP API v2 de 30s)
 
   constructor(
     private httpService: HttpService,

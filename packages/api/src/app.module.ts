@@ -25,6 +25,7 @@ import { HealthModule } from './health/health.module'
 import { DatabaseModule } from './database/database.module'
 import { CircuitBreakerModule } from './circuit-breaker/circuit-breaker.module'
 import { SecretsModule } from './secrets/secrets.module'
+import { CachePreloaderService } from './initialization/cache-preloader.service'
 
 @Module({
   imports: [
@@ -59,7 +60,8 @@ import { SecretsModule } from './secrets/secrets.module'
     PatientsService,
     AppointmentsService,
     AppointmentsTypesService,
-    DriCloudService
+    DriCloudService,
+    CachePreloaderService
   ],
 })
 export class AppModule {}
