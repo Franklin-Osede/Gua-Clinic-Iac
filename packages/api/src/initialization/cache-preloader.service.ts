@@ -1,15 +1,19 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import { DoctorsService } from '../doctors/doctors.service'
+import { MedicalSpecialtiesService } from '../medical-specialties/medical-specialties.service'
 
 /**
- * Servicio que pre-carga el caché de doctores al iniciar el backend
+ * Servicio que pre-carga el caché de doctores y especialidades al iniciar el backend
  * Esto asegura que el primer usuario no tenga que esperar la llamada a DriCloud
  */
 @Injectable()
 export class CachePreloaderService implements OnModuleInit {
   private readonly logger = new Logger(CachePreloaderService.name)
 
-  constructor(private readonly doctorsService: DoctorsService) {}
+  constructor(
+    private readonly doctorsService: DoctorsService,
+    private readonly medicalSpecialtiesService: MedicalSpecialtiesService
+  ) {}
 
   async onModuleInit() {
     // Esperar 5 segundos para que el backend esté completamente listo
@@ -21,9 +25,19 @@ export class CachePreloaderService implements OnModuleInit {
   }
 
   private async preloadCache() {
-    this.logger.log('🔄 Iniciando pre-carga de caché de doctores...')
+    this.logger.log('🔄 Iniciando pre-carga de caché...')
     
-    // Pre-cargar las especialidades más comunes
+    // PRIMERO: Pre-cargar especialidades médicas (crítico para la primera pantalla)
+    try {
+      this.logger.log('📋 Pre-cargando especialidades médicas...')
+      await this.medicalSpecialtiesService.getMedicalSpecialties(false)
+      this.logger.log('✅ Especialidades médicas pre-cargadas')
+    } catch (error) {
+      this.logger.error(`❌ Error pre-cargando especialidades médicas:`, error.message)
+    }
+    
+    // SEGUNDO: Pre-cargar doctores para las especialidades más comunes
+    this.logger.log('👨‍⚕️ Pre-cargando doctores...')
     const commonServiceIds = [1, 8, 9, 10, 18] // Urología, Psicología, Ginecología, Fisioterapia, Andrología
     const results = []
     
@@ -40,7 +54,7 @@ export class CachePreloaderService implements OnModuleInit {
     }
     
     const successCount = results.filter(r => r.status === 'success').length
-    this.logger.log(`✅ Pre-carga de caché completada: ${successCount}/${commonServiceIds.length} exitosos`)
+    this.logger.log(`✅ Pre-carga de caché completada: ${successCount}/${commonServiceIds.length} doctores exitosos`)
     
     return results
   }

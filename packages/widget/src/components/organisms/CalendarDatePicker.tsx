@@ -127,21 +127,32 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
   }, []);
 
   const fetchAvailability = useCallback(
-    async (date: Date) => {
+    async (date: Date, datesToFetch: number = 3) => {
       try {
-        setLoadingDate(true);
+        // No establecer loadingDate aquí, el calendario ya está visible
+        const startTime = performance.now();
         const data = await getDoctorAgenda(
           doctorId,
           formatStringFromDate(date),
-          31,
+          datesToFetch,
         );
-        setFullAvailableData(data);
+        const endTime = performance.now();
+        console.log(`⚡ fetchAvailability (${datesToFetch} días) tomó ${(endTime - startTime).toFixed(0)}ms`);
+        
+        // Acumular datos en lugar de reemplazar (para cargas incrementales)
+        setFullAvailableData(prev => {
+          if (prev.length === 0) {
+            // Primera carga: usar directamente
+            return data;
+          }
+          // Cargas adicionales: combinar y eliminar duplicados
+          const combined = [...prev, ...data];
+          return Array.from(new Set(combined));
+        });
         return data;
       } catch (error) {
         console.error("Error fetching available dates:", error);
         return [];
-      } finally {
-        setLoadingDate(false);
       }
     },
     [doctorId],
@@ -171,7 +182,6 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
     console.log('📅 CalendarDatePicker montado/actualizado:', { doctorId, activeDate });
     
     // Resetear estados cuando se monta o cambia el doctorId
-    setLoadingDate(true);
     setLoadingTime(true);
     setSelectedDate(null);
     setDateChosen("");
@@ -181,61 +191,74 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
     setDateString("");
     setShowMonthPicker(false); // Cerrar selector al cambiar de doctor
     
+    // OPTIMIZACIÓN: Mostrar calendario inmediatamente, no esperar a los datos
+    setLoadingDate(false);
+    
     const initialize = async () => {
       try {
         // Validar que doctorId sea válido
         if (!doctorId || doctorId === 0) {
           console.warn('⚠️ CalendarDatePicker: doctorId inválido o es 0:', doctorId);
-          setLoadingDate(false);
           setLoadingTime(false);
           return;
         }
         
         const currentDate = new Date();
         console.log('📅 Inicializando calendario para doctorId:', doctorId);
-        const data = await fetchAvailability(currentDate);
         
-        console.log('📅 Datos recibidos de la API:', { 
+        // OPTIMIZACIÓN MÁXIMA: Cargar solo 3 días primero para respuesta ultra-rápida
+        const data = await fetchAvailability(currentDate, 3);
+        
+        console.log('📅 Datos iniciales recibidos de la API (3 días):', { 
           length: data?.length || 0, 
           firstItem: data?.[0],
           sample: data?.slice(0, 3) 
         });
 
-        if (!data || !Array.isArray(data) || data.length === 0) {
-          console.warn('⚠️ No hay datos disponibles para el doctor:', doctorId);
-          setLoadingDate(false);
-          setLoadingTime(false);
-          return;
-        }
-
-        // Validar que data[0] existe y tiene el formato correcto
-        if (!data[0] || typeof data[0] !== 'string' || data[0].length < 8) {
-          console.error('❌ Formato de datos inválido:', data[0]);
-          setLoadingDate(false);
-          setLoadingTime(false);
-          return;
-        }
-
-        const firstAvailableMonth = parseInt(data[0].slice(4, 6), 10) - 1;
-        const currentMonth = currentDate.getMonth();
-
-        console.log('📅 Comparando meses:', { firstAvailableMonth, currentMonth });
-
-        if (firstAvailableMonth !== currentMonth) {
-          const firstDayOfMonth = new Date(
-            currentDate.getFullYear(),
-            firstAvailableMonth,
-            1,
-          );
-          console.log('📅 Cargando datos del mes:', firstDayOfMonth);
-          const newData = await fetchAvailability(firstDayOfMonth);
-          parseAvailableDates(newData);
-        } else {
+        // Actualizar fechas disponibles inmediatamente cuando lleguen los primeros datos
+        if (data && Array.isArray(data) && data.length > 0) {
           parseAvailableDates(data);
+        } else {
+          console.warn('⚠️ No hay datos disponibles para el doctor:', doctorId);
         }
+
+        // Cargar 7 días en paralelo inmediatamente (sin esperar)
+        fetchAvailability(currentDate, 7).then(additionalData => {
+          if (additionalData && additionalData.length > 0) {
+            console.log('📅 Datos adicionales (7 días) recibidos');
+            parseAvailableDates(additionalData);
+          }
+        }).catch(error => {
+          console.warn('⚠️ Error cargando datos adicionales (no crítico):', error);
+        });
+
+        // Cargar 14 días después de 50ms (muy rápido)
+        setTimeout(async () => {
+          try {
+            const moreData = await fetchAvailability(currentDate, 14);
+            if (moreData && moreData.length > 0) {
+              console.log('📅 Datos adicionales (14 días) recibidos');
+              parseAvailableDates(moreData);
+            }
+          } catch (error) {
+            console.warn('⚠️ Error cargando datos adicionales (no crítico):', error);
+          }
+        }, 50);
+
+        // Cargar 31 días completos después de 150ms
+        setTimeout(async () => {
+          try {
+            const fullData = await fetchAvailability(currentDate, 31);
+            if (fullData && fullData.length > 0) {
+              console.log('📅 Datos completos (31 días) recibidos');
+              parseAvailableDates(fullData);
+            }
+          } catch (error) {
+            console.warn('⚠️ Error cargando datos completos (no crítico):', error);
+          }
+        }, 150);
       } catch (error) {
         console.error('❌ Error inicializando calendario:', error);
-        setLoadingDate(false);
         setLoadingTime(false);
       }
     };

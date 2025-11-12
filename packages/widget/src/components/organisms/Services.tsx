@@ -164,13 +164,14 @@ const Services: React.FC<ServicePageProps> = ({
             Bienvenido/a a Cita Online 👋
           </div>
           <h1 className="text-center" style={{
-            fontSize: '22px',
+            fontSize: typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? '18px' : '22px',
             fontWeight: 600,
             color: '#242424',
             textAlign: 'center',
-            margin: '0',
+            margin: '0 auto',
             letterSpacing: '-0.2px',
-            lineHeight: '1.3'
+            lineHeight: '1.3',
+            maxWidth: '90%'
           }}>
             Selecciona la Especialidad
           </h1>

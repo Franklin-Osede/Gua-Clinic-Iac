@@ -572,9 +572,14 @@ const MainPage: React.FC = () => {
     });
   };
 
+  // Detectar si estamos en WordPress (no localhost)
+  const isWordPress = typeof window !== 'undefined' && 
+    window.location.hostname !== 'localhost' && 
+    window.location.hostname !== '127.0.0.1';
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-start">
-      <div className="flex-grow flex items-start justify-center">
+      <div className={`flex items-start justify-center ${isWordPress ? 'pb-4' : 'flex-grow'}`}>
         {allPages[pageState.currentPage].component}
       </div>
 
@@ -582,8 +587,14 @@ const MainPage: React.FC = () => {
         className={`flex items-center justify-center ${
           pageState.currentPage === LAST_PAGE_INDEX
             ? "h-0"
-            : "2xl:h-40 md:h-40 h-20 mt-2"
+            : isWordPress 
+              ? "h-auto py-4 mt-2" // En WordPress: menos espacio, más compacto
+              : "2xl:h-40 md:h-40 h-20 mt-2" // En localhost: mantener espacio original
         }`}
+        style={isWordPress ? {
+          marginTop: '16px',
+          paddingBottom: '8px'
+        } : {}}
       >
         <div className="flex 2xl:flex-col md:flex-col flex-row-reverse items-center justify-center" style={{ gap: '16px' }}>
           {showNextButton && pageState.currentPage !== LAST_PAGE_INDEX && (

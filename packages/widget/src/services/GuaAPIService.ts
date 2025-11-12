@@ -87,104 +87,100 @@ export const initializeSession = async () => {
   }
 };
 
+// Datos estáticos de fallback (las 6 especialidades principales)
+const FALLBACK_SPECIALTIES = [
+  { id: 1, name: 'Urología', ESP_ID: 1, ESP_NOMBRE: 'Urología' },
+  { id: 18, name: 'Andrología y medicina sexual', ESP_ID: 18, ESP_NOMBRE: 'Andrología y medicina sexual' },
+  { id: 10, name: 'Fisioterapia', ESP_ID: 10, ESP_NOMBRE: 'Fisioterapia' },
+  { id: 9, name: 'Ginecología', ESP_ID: 9, ESP_NOMBRE: 'Ginecología' },
+  { id: 6, name: 'Medicina Rehabilitadora', ESP_ID: 6, ESP_NOMBRE: 'Medicina Rehabilitadora' },
+  { id: 19, name: 'Medicina Integrativa', ESP_ID: 19, ESP_NOMBRE: 'Medicina Integrativa' },
+];
+
 export const getMedicalSpecialties = async (refresh: boolean = false) => {
-  try {
-    const url = refresh ? `/medical-specialties?refresh=true` : `/medical-specialties`;
-    const fullUrl = `${getApiBaseUrl()}${url}`;
-    console.log(`🌐 Llamando a: ${fullUrl}`);
-    console.log(`🔍 Configuración axios:`, {
-      baseURL: apiClient.defaults.baseURL,
-      withCredentials: apiClient.defaults.withCredentials,
-      headers: apiClient.defaults.headers
-    });
+  const url = refresh ? `/medical-specialties?refresh=true` : `/medical-specialties`;
+  const fullUrl = `${getApiBaseUrl()}${url}`;
+  
+  // ESTRATEGIA SIMPLE: Retry con 3 intentos (sin over-engineering)
+  const maxRetries = 3;
+  let lastError: any = null;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🌐 Intento ${attempt}/${maxRetries}: Llamando a ${fullUrl}`);
+      const startTime = Date.now();
+      
+      // Timeout más corto en cada intento (20s, 25s, 30s)
+      const timeout = attempt * 10000 + 10000; // 20s, 30s, 40s
+      
+      const response = await apiClient.get(url, {
+        timeout: timeout,
+      });
     
-    console.log(`⏳ Iniciando petición GET a /medical-specialties...`);
-    const startTime = Date.now();
-    
-    const response = await apiClient.get(url);
-    
-    const duration = Date.now() - startTime;
-    console.log(`✅ Respuesta recibida en ${duration}ms`);
-    console.log(`✅ Status:`, response.status);
-    console.log(`✅ Headers:`, response.headers);
-    console.log(`✅ Datos recibidos:`, response.data);
-    console.log(`✅ Tipo de datos:`, typeof response.data, Array.isArray(response.data) ? '(array)' : '(no array)');
-    console.log(`✅ Tamaño de datos:`, JSON.stringify(response.data).length, 'bytes');
-    
-    // Si la respuesta tiene un mensaje de error, loguearlo
-    if (response.data?.message) {
-      console.error(`❌ API devolvió mensaje de error:`, response.data.message);
-      // Si es 503, devolver array vacío en lugar de crashear
-      if (response.status === 503 || response.data.message.includes('Unavailable')) {
-        console.warn('⚠️ Backend no disponible (503), devolviendo array vacío');
-        return [];
+      const duration = Date.now() - startTime;
+      console.log(`✅ Respuesta recibida en ${duration}ms (intento ${attempt})`);
+      
+      // Si la respuesta tiene un mensaje de error, loguearlo
+      if (response.data?.message) {
+        console.error(`❌ API devolvió mensaje de error:`, response.data.message);
+        if (response.status === 503 || response.data.message.includes('Unavailable')) {
+          // Si es 503, intentar de nuevo (puede ser que el caché se esté cargando)
+          if (attempt < maxRetries) {
+            console.log(`⏳ Esperando 2 segundos antes del siguiente intento...`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            continue;
+          }
+        }
+      }
+      
+      // El backend ahora devuelve directamente un array de especialidades
+      let specialties: any[] = [];
+      if (Array.isArray(response.data)) {
+        specialties = response.data;
+      } else if (response.data.Data?.Especialidades) {
+        specialties = response.data.Data.Especialidades;
+      } else if (response.data.Especialidades) {
+        specialties = response.data.Especialidades;
+      }
+      
+      if (specialties.length > 0) {
+        console.log(`✅ Éxito: ${specialties.length} especialidades obtenidas`);
+        return specialties;
+      }
+      
+      // Si llegamos aquí, la respuesta está vacía, intentar de nuevo
+      if (attempt < maxRetries) {
+        console.log(`⚠️ Respuesta vacía, reintentando...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        continue;
+      }
+      
+    } catch (error: any) {
+      lastError = error;
+      console.error(`❌ Intento ${attempt}/${maxRetries} falló:`, error.message);
+      
+      // Si es timeout o error de red, esperar antes de reintentar
+      if (attempt < maxRetries && (error.code === 'ECONNABORTED' || !error.response)) {
+        const delay = attempt * 2000; // 2s, 4s
+        console.log(`⏳ Esperando ${delay}ms antes del siguiente intento...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      
+      // Si es el último intento, no continuar
+      if (attempt === maxRetries) {
+        break;
       }
     }
-    
-    // El backend ahora devuelve directamente un array de especialidades
-    // Manejar tanto array directo como estructura antigua
-    if (Array.isArray(response.data)) {
-      console.log(`✅ Respuesta es array con ${response.data.length} especialidades`);
-      return response.data;
-    } else if (response.data.Data?.Especialidades) {
-      console.log(`✅ Respuesta tiene Data.Especialidades con ${response.data.Data.Especialidades.length} especialidades`);
-      return response.data.Data.Especialidades;
-    } else if (response.data.Especialidades) {
-      console.log(`✅ Respuesta tiene Especialidades con ${response.data.Especialidades.length} especialidades`);
-      return response.data.Especialidades;
-    }
-    
-    console.warn('⚠️ Formato de respuesta no reconocido, devolviendo array vacío');
-    return [];
-  } catch (error: any) {
-    console.error("❌ ========== ERROR CAPTURADO ==========");
-    console.error("❌ Error fetching medical specialties data:", error);
-    console.error("❌ Error type:", error.constructor.name);
-    console.error("❌ Error message:", error.message);
-    console.error("❌ Error details:", {
-      message: error.message,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      url: error.config?.url,
-      baseURL: error.config?.baseURL,
-      headers: error.config?.headers,
-      withCredentials: error.config?.withCredentials
-    });
-    
-    // Si es un error de red (sin response), mostrar más detalles
-    if (!error.response) {
-      console.error("❌ ========== ERROR DE RED ==========");
-      console.error("❌ No hay respuesta del servidor (posible CORS, timeout, o red)");
-      console.error("❌ Error code:", error.code);
-      console.error("❌ Error message:", error.message);
-      console.error("❌ Error stack:", error.stack);
-      console.error("❌ Request config:", {
-        url: error.config?.url,
-        method: error.config?.method,
-        baseURL: error.config?.baseURL,
-        timeout: error.config?.timeout,
-        withCredentials: error.config?.withCredentials
-      });
-    } else {
-      console.error("❌ ========== ERROR DEL SERVIDOR ==========");
-      console.error("❌ Status:", error.response.status);
-      console.error("❌ Status Text:", error.response.statusText);
-      console.error("❌ Response Data:", error.response.data);
-      console.error("❌ Response Headers:", error.response.headers);
-    }
-    console.error("❌ ========================================");
-    
-    // Si es un error 503, devolver array vacío en lugar de lanzar error
-    if (error.response?.status === 503) {
-      console.warn('⚠️ Backend no disponible (503), devolviendo array vacío');
-      return [];
-    }
-    
-    // Para otros errores, también devolver array vacío para que el UI no crashee
-    console.warn('⚠️ Error al obtener especialidades, devolviendo array vacío');
-    return [];
   }
+  
+  // Si todos los intentos fallaron, usar datos estáticos de fallback
+  console.warn('⚠️ Todos los intentos fallaron, usando datos estáticos de fallback');
+  console.warn('⚠️ Esto significa que el backend no está disponible o el caché no está listo');
+  if (lastError) {
+    console.error("❌ Error final después de todos los intentos:", lastError.message);
+  }
+  return FALLBACK_SPECIALTIES;
 };
 
 export const getAppointmentTypes = async (serviceId: number, type?: string) => {
