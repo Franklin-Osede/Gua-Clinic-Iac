@@ -28,9 +28,10 @@ const allowedProfessionals: Record<string, string[]> = {
   // Fisioterapia - SOLO Jasmina (viene de Psicología en DriCloud)
   'fisioterapia': ['jasmina', 'jasmina garcia', 'jasmina garcia velazquez', 'jasmina garcia velázquez', 'garcia velazquez', 'velazquez'],
   // Medicina Rehabilitadora - SOLO María Consuelo
-  'medicinafisica': ['maria consuelo', 'consuelo', 'maria c', 'maria consuelo'],
-  'rehabilitacion': ['maria consuelo', 'consuelo', 'maria c', 'maria consuelo'],
-  'medicinarehabilitadora': ['maria consuelo', 'consuelo', 'maria c', 'maria consuelo'],
+  // Nota: DriCloud puede devolver "Maria Calvo" sin "Consuelo"
+  'medicinafisica': ['maria consuelo', 'consuelo', 'maria c', 'maria consuelo', 'maria calvo', 'maria calvo garcia', 'calvo garcia', 'calvo'],
+  'rehabilitacion': ['maria consuelo', 'consuelo', 'maria c', 'maria consuelo', 'maria calvo', 'maria calvo garcia', 'calvo garcia', 'calvo'],
+  'medicinarehabilitadora': ['maria consuelo', 'consuelo', 'maria c', 'maria consuelo', 'maria calvo', 'maria calvo garcia', 'calvo garcia', 'calvo'],
   // Ginecología - SOLO Carlos Blanco
   'ginecologia': ['carlos blanco', 'carlos', 'blanco', 'carlos blanco'],
   // Medicina Integrativa - SOLO Diego Puebla (también se llama Medicina Preventiva)
@@ -63,10 +64,34 @@ const isDoctorAllowed = (doctorName: string, serviceName: string): boolean => {
   }
   
   // Buscar en todas las claves de allowedProfessionals
+  // IMPORTANTE: Buscar primero las claves más específicas (más largas) para evitar falsos positivos
+  const sortedKeys = Object.keys(allowedProfessionals).sort((a, b) => b.length - a.length);
+  
   let foundMatchingKey = false;
-  for (const [key, allowedNames] of Object.entries(allowedProfessionals)) {
-    // Búsqueda más flexible: verificar si la especialidad normalizada contiene la clave o viceversa
-    const serviceMatches = normalizedService.includes(key) || key.includes(normalizedService);
+  for (const key of sortedKeys) {
+    const allowedNames = allowedProfessionals[key];
+    
+    // Normalizar el servicio sin espacios para comparar con claves sin espacios
+    const normalizedServiceNoSpaces = normalizedService.replace(/\s+/g, '');
+    
+    // Búsqueda más precisa: verificar coincidencias exactas primero
+    const exactMatch = normalizedServiceNoSpaces === key || 
+                       normalizedServiceNoSpaces.includes(key) || 
+                       key.includes(normalizedServiceNoSpaces);
+    
+    // Si no hay coincidencia exacta, verificar palabras clave significativas (más de 6 caracteres)
+    const keywordMatch = !exactMatch && (() => {
+      // Extraer palabras significativas del servicio (más de 6 caracteres, sin espacios)
+      const serviceWords = normalizedServiceNoSpaces.match(/.{6,}/g) || [];
+      // Extraer palabras significativas de la clave (más de 6 caracteres)
+      const keyWords = key.match(/.{6,}/g) || [];
+      
+      // Verificar si alguna palabra significativa coincide
+      return serviceWords.some(sw => keyWords.some(kw => sw.includes(kw) || kw.includes(sw))) ||
+             keyWords.some(kw => serviceWords.some(sw => sw.includes(kw) || kw.includes(sw)));
+    })();
+    
+    const serviceMatches = exactMatch || keywordMatch;
     
     if (serviceMatches) {
       foundMatchingKey = true;
@@ -260,10 +285,9 @@ const Professionals: React.FC<ProfessionalsProps> = ({
             let displayName = 'Dr';
             
             if (firstName && lastName) {
-              // Formato: "Dr Nombre Apellido" pero solo primer nombre si es muy largo
-              const firstNames = firstName.split(' ');
-              const firstFirstName = firstNames[0]; // Solo primer nombre
-              displayName = `Dr ${firstFirstName} ${lastName}`;
+              // Formato: "Dr Nombre Completo Apellido" - mostrar todo el nombre, no solo el primero
+              // Esto es importante para "Maria Consuelo" que debe mostrarse completo
+              displayName = `Dr ${firstName} ${lastName}`;
             } else if (firstName) {
               displayName = `Dr ${firstName}`;
             } else if (lastName) {

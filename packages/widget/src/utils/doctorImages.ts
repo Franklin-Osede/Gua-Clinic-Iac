@@ -28,7 +28,7 @@ export const doctorImageMap: Record<number, string> = {
   25: '/doctors/25.jpg',
   26: '/doctors/26.jpg',
   33: '/doctors/33.jpg',
-  44: '/doctors/44.jpg',
+  44: '/doctors/MARIA_CONSUELO.png', // María Consuelo Calvo Garcia - Medicina Rehabilitadora (usando nombre sin caracteres especiales para compatibilidad con Vite)
   50: '/doctors/50.png', // Nicolas Nervo Posada
   56: '/doctors/56.jpg',
   63: '/doctors/63.png', // Andrés Humberto Vargas Trujillo
@@ -59,7 +59,16 @@ const doctorNameMap: Record<string, string> = {
   'jasmina': '/doctors/JASMINA.png',
   'jasmina garcia': '/doctors/JASMINA.png',
   'jasmina garcia velazquez': '/doctors/JASMINA.png',
-  'maria consuelo': '/doctors/MARÍA CONSUELO.png',
+  'maria consuelo': '/doctors/MARIA_CONSUELO.png',
+  'maria consuelo calvo garcia': '/doctors/MARIA_CONSUELO.png', // Nombre completo de DriCloud
+  'maria consuelo calvo': '/doctors/MARIA_CONSUELO.png',
+  'consuelo calvo garcia': '/doctors/MARIA_CONSUELO.png',
+  'consuelo': '/doctors/MARIA_CONSUELO.png',
+  // Variaciones que DriCloud puede devolver (sin "Consuelo")
+  'maria calvo': '/doctors/MARIA_CONSUELO.png', // DriCloud puede devolver solo "Maria Calvo"
+  'maria calvo garcia': '/doctors/MARIA_CONSUELO.png',
+  'calvo garcia': '/doctors/MARIA_CONSUELO.png',
+  'calvo': '/doctors/MARIA_CONSUELO.png',
   'diego puebla': '/doctors/Diego Puebla.jpg',
   'hector ajubita': '/doctors/Héctor Ajubita Fernández.jpg',
   'hector ajubita fernandez': '/doctors/Héctor Ajubita Fernández.jpg',

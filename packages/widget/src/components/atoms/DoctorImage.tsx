@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getDoctorImagePath } from '../../utils/doctorImages';
 
 interface DoctorImageProps {
@@ -26,13 +26,32 @@ const DoctorImage: React.FC<DoctorImageProps> = ({
 }) => {
   const [imageError, setImageError] = useState(false);
   const [fallbackError, setFallbackError] = useState(false);
+  const [currentImageSrc, setCurrentImageSrc] = useState<string | null>(null);
+  const [triedAlternatives, setTriedAlternatives] = useState<string[]>([]);
   
   const localImagePath = getDoctorImagePath(doctorId, doctorName);
   
   // Log para debugging
-  if (doctorName) {
-    console.log(`🖼️ DoctorImage - ID: ${doctorId}, Nombre: "${doctorName}", FotoPerfil: ${dricloudImage ? 'Sí' : 'No'}, LocalPath: ${localImagePath || 'No'}`);
-  }
+  useEffect(() => {
+    if (doctorName) {
+      console.log(`🖼️ DoctorImage - ID: ${doctorId}, Nombre: "${doctorName}", FotoPerfil: ${dricloudImage ? 'Sí' : 'No'}, LocalPath: ${localImagePath || 'No'}`);
+    }
+  }, [doctorId, doctorName, dricloudImage, localImagePath]);
+  
+  // Resetear estado cuando cambian las props (doctorId o localImagePath)
+  useEffect(() => {
+    // Resetear todos los estados cuando cambia el doctorId o localImagePath
+    setImageError(false);
+    setFallbackError(false);
+    setCurrentImageSrc(null);
+    setTriedAlternatives([]);
+    
+    // Inicializar directamente con la ruta local si está disponible
+    if (localImagePath) {
+      setCurrentImageSrc(localImagePath);
+      console.log(`🖼️ Inicializando carga de imagen local: "${localImagePath}"`);
+    }
+  }, [doctorId, localImagePath]);
   
   // Si hay imagen de DriCloud y no ha fallado, intentar usarla
   if (dricloudImage && dricloudImage.trim() !== '' && !imageError) {
@@ -42,21 +61,30 @@ const DoctorImage: React.FC<DoctorImageProps> = ({
         alt={alt}
         className={className}
         onError={() => {
+          console.error(`❌ Error al cargar imagen de DriCloud para ${doctorName || doctorId}`);
           setImageError(true);
+        }}
+        onLoad={() => {
+          console.log(`✅ Imagen de DriCloud cargada exitosamente para ${doctorName || doctorId}`);
         }}
       />
     );
   }
   
-  // Si hay imagen local y no ha fallado, usarla
-  if (localImagePath && !fallbackError) {
+  // Si hay imagen local, intentar cargarla
+  if (localImagePath && !fallbackError && currentImageSrc) {
     return (
       <img
-        src={localImagePath}
+        src={currentImageSrc}
         alt={alt}
         className={className}
-        onError={() => {
+        onError={(e) => {
+          console.error(`❌ Error al cargar imagen local: "${currentImageSrc}"`);
+          console.error(`❌ URL completa: ${window.location.origin}${currentImageSrc}`);
           setFallbackError(true);
+        }}
+        onLoad={() => {
+          console.log(`✅ Imagen local cargada exitosamente: "${currentImageSrc}"`);
         }}
       />
     );
