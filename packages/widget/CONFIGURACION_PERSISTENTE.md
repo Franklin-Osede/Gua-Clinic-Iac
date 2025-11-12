@@ -88,7 +88,7 @@ curl "https://ybymfv93yg.execute-api.eu-north-1.amazonaws.com/prod/medical-speci
    ./start-dev.sh
    # O simplemente: npm run dev
    ```
-   
+
    El script `start-dev.sh` ahora:
    - ✅ Verifica que existe `.env.development`
    - ✅ Lo crea automáticamente desde `.env.development.example` si no existe
