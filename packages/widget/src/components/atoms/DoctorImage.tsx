@@ -27,7 +27,6 @@ const DoctorImage: React.FC<DoctorImageProps> = ({
   const [imageError, setImageError] = useState(false);
   const [fallbackError, setFallbackError] = useState(false);
   const [currentImageSrc, setCurrentImageSrc] = useState<string | null>(null);
-  const [triedAlternatives, setTriedAlternatives] = useState<string[]>([]);
   
   const localImagePath = getDoctorImagePath(doctorId, doctorName);
   
@@ -44,7 +43,6 @@ const DoctorImage: React.FC<DoctorImageProps> = ({
     setImageError(false);
     setFallbackError(false);
     setCurrentImageSrc(null);
-    setTriedAlternatives([]);
     
     // Inicializar directamente con la ruta local si está disponible
     if (localImagePath) {
@@ -78,7 +76,7 @@ const DoctorImage: React.FC<DoctorImageProps> = ({
         src={currentImageSrc}
         alt={alt}
         className={className}
-        onError={(e) => {
+        onError={() => {
           console.error(`❌ Error al cargar imagen local: "${currentImageSrc}"`);
           console.error(`❌ URL completa: ${window.location.origin}${currentImageSrc}`);
           setFallbackError(true);

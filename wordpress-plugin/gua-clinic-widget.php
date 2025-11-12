@@ -78,45 +78,71 @@ class GuaClinicWidget {
     /**
      * Intenta cargar scripts en wp_enqueue_scripts como fallback
      * Esto ayuda cuando el shortcode está en bloques de Gutenberg o widgets
+     * Mejorado para no depender de caché - siempre verifica el contenido actual
      */
     public function enqueue_scripts() {
-        // Intentar detectar el shortcode de varias formas
+        // Intentar detectar el shortcode de varias formas (sin depender de caché)
         $should_load = false;
         
-        // Método 1: Verificar en contenido del post (método tradicional)
+        // Método 1: Verificar en contenido del post actual (sin caché)
         if (is_singular()) {
             $post = get_post();
-            if ($post && has_shortcode($post->post_content, 'gua_clinic_widget')) {
-                $should_load = true;
-            }
-        }
-        
-        // Método 2: Verificar en bloques de Gutenberg
-        if (!$should_load && is_singular()) {
-            $post = get_post();
-            if ($post && has_blocks($post->post_content)) {
-                // Buscar el shortcode en los bloques
-                if (strpos($post->post_content, 'gua_clinic_widget') !== false) {
+            if ($post) {
+                // Obtener contenido fresco, no desde caché
+                $content = $post->post_content;
+                if (has_shortcode($content, 'gua_clinic_widget') || 
+                    strpos($content, '[gua_clinic_widget') !== false) {
                     $should_load = true;
                 }
             }
         }
         
-        // Método 3: Verificar en widgets/sidebars
+        // Método 2: Verificar en bloques de Gutenberg (sin caché)
+        if (!$should_load && is_singular()) {
+            $post = get_post();
+            if ($post && has_blocks($post->post_content)) {
+                // Buscar el shortcode en los bloques directamente
+                $content = $post->post_content;
+                if (strpos($content, 'gua_clinic_widget') !== false ||
+                    strpos($content, '[gua_clinic_widget') !== false) {
+                    $should_load = true;
+                }
+            }
+        }
+        
+        // Método 3: Verificar en widgets/sidebars (sin caché)
         if (!$should_load) {
-            // Buscar en todos los sidebars activos
+            // Buscar en todos los sidebars activos - renderizar sin caché
             global $wp_registered_sidebars;
             if (is_array($wp_registered_sidebars)) {
                 foreach ($wp_registered_sidebars as $sidebar) {
                     if (is_active_sidebar($sidebar['id'])) {
+                        // Renderizar sidebar sin caché para detectar shortcode
                         ob_start();
                         dynamic_sidebar($sidebar['id']);
                         $sidebar_content = ob_get_clean();
-                        if (strpos($sidebar_content, 'gua_clinic_widget') !== false) {
+                        if (strpos($sidebar_content, 'gua_clinic_widget') !== false ||
+                            strpos($sidebar_content, '[gua_clinic_widget') !== false) {
                             $should_load = true;
                             break;
                         }
                     }
+                }
+            }
+        }
+        
+        // Método 4: Verificar en la página actual completa (último recurso)
+        if (!$should_load) {
+            // Obtener el contenido completo de la página sin caché
+            global $wp_query;
+            if ($wp_query && $wp_query->is_main_query()) {
+                // Verificar en el output buffer si está disponible
+                $current_content = ob_get_contents();
+                if ($current_content && (
+                    strpos($current_content, 'gua_clinic_widget') !== false ||
+                    strpos($current_content, '[gua_clinic_widget') !== false
+                )) {
+                    $should_load = true;
                 }
             }
         }
