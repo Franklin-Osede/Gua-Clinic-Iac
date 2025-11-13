@@ -54,11 +54,27 @@ export class DoctorsService {
     try {
       this.logger.log(`Fetching doctors for service ${serviceId} from DriCloud...`);
       
-      // Obtener doctores de especialidades adicionales si es Fisioterapia
+      // Obtener doctores de especialidades adicionales si es necesario
       const additionalSpecialtyIds: number[] = [];
+      
+      // Fisioterapia (ID 10) incluye doctores de Psicología (ID 8)
       if (isFisioterapia) {
         additionalSpecialtyIds.push(8); // Psicología
         this.logger.log(`📋 Incluyendo doctores de Psicología (ESP_ID 8) para Fisioterapia`);
+      }
+      
+      // Urología (ID 1) incluye doctores de Andrología (ID 18) porque se muestran juntos
+      const isUrologia = serviceId === 1;
+      if (isUrologia) {
+        additionalSpecialtyIds.push(18); // Andrología
+        this.logger.log(`📋 Incluyendo doctores de Andrología (ESP_ID 18) para Urología`);
+      }
+      
+      // Andrología (ID 18) también incluye doctores de Urología (ID 1) para consistencia
+      const isAndrologia = serviceId === 18;
+      if (isAndrologia) {
+        additionalSpecialtyIds.push(1); // Urología
+        this.logger.log(`📋 Incluyendo doctores de Urología (ESP_ID 1) para Andrología`);
       }
       
       // Obtener doctores de la especialidad principal
@@ -155,6 +171,11 @@ export class DoctorsService {
       
       if (allRawDoctors.length === 0) {
         this.logger.warn(`No doctors found for serviceId ${serviceId}`);
+        // Para Medicina Integrativa (ID 19) que puede no estar en DriCloud todavía,
+        // devolver array vacío en lugar de error para que la especialidad se muestre
+        if (serviceId === 19) {
+          this.logger.log(`ℹ️ Medicina Integrativa (ID 19) no tiene doctores en DriCloud todavía, devolviendo array vacío`);
+        }
       }
       
       this.logger.debug(`Raw doctors count: ${allRawDoctors.length} (${rawDoctors.length} principales + ${additionalDoctors.length} adicionales, ${allRawDoctors.length - rawDoctors.length} únicos agregados)`);
@@ -170,7 +191,7 @@ export class DoctorsService {
         ...doctor
       }));
       
-      // Guardar en caché
+      // Guardar en caché (incluso si está vacío, para evitar llamadas repetidas)
       await this.dynamoDBService.setCache(
         cacheKey,
         doctors,
@@ -182,8 +203,21 @@ export class DoctorsService {
       return doctors;
     } catch (error) {
       this.logger.error(`❌ Error fetching doctors for serviceId ${serviceId}:`, error.message || error);
-      // No devolver datos mock, solo datos reales
-      // Si hay error, lanzarlo para que el frontend lo maneje correctamente
+      
+      // Para Medicina Integrativa (ID 19) que puede no estar en DriCloud todavía,
+      // devolver array vacío en lugar de lanzar error para que la especialidad se muestre
+      if (serviceId === 19) {
+        this.logger.log(`ℹ️ Medicina Integrativa (ID 19) no está disponible en DriCloud todavía, devolviendo array vacío`);
+        // Guardar array vacío en caché para evitar llamadas repetidas
+        await this.dynamoDBService.setCache(
+          cacheKey,
+          [],
+          this.CACHE_TTL_MINUTES
+        );
+        return [];
+      }
+      
+      // Para otras especialidades, lanzar el error normalmente
       throw error;
     }
   }

@@ -1,12 +1,19 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { DriCloudService } from '../dricloud/dricloud.service'
+import { DynamoDBService } from '../database/dynamodb.service'
 
 @Injectable()
 export class DoctorAvailabilityService {
-  constructor(private driCloudService: DriCloudService) {}
+  private readonly logger = new Logger(DoctorAvailabilityService.name)
+  private readonly CACHE_TTL_MINUTES = 5; // 5 minutos (disponibilidad cambia frecuentemente pero queremos reducir llamadas a DriCloud)
 
-  async getDoctorAgenda(doctorId: number, startDate: string, datesToFetch: number) {
-    console.log(`🔍 DoctorAvailabilityService.getDoctorAgenda called with:`, { doctorId, startDate, datesToFetch })
+  constructor(
+    private driCloudService: DriCloudService,
+    private dynamoDBService: DynamoDBService
+  ) {}
+
+  async getDoctorAgenda(doctorId: number, startDate: string, datesToFetch: number, forceRefresh: boolean = false) {
+    this.logger.log(`🔍 DoctorAvailabilityService.getDoctorAgenda called with:`, { doctorId, startDate, datesToFetch, forceRefresh })
     
     if (!doctorId || doctorId <= 0) {
       throw new Error(`Invalid doctorId: ${doctorId}. Must be a positive number.`);
@@ -22,19 +29,61 @@ export class DoctorAvailabilityService {
       throw new Error(`Invalid datesToFetch: ${datesToFetch}. Must be between 1 and 31 (DriCloud API limit). For 2 months, make multiple calls.`);
     }
     
+    // Clave de caché única por doctor, fecha y días
+    const cacheKey = `doctor-availability:${doctorId}:${startDate}:${datesToFetch}`;
+    
+    // Si forceRefresh es true, limpiar el caché primero
+    if (forceRefresh) {
+      this.logger.log(`🔄 Forzando recarga de disponibilidad para doctor ${doctorId} (ignorando caché)`);
+      try {
+        await this.dynamoDBService.deleteFromCache(cacheKey);
+      } catch (cacheError) {
+        this.logger.warn('⚠️ Error al limpiar caché (continuando):', cacheError.message);
+      }
+    }
+    
+    // Verificar caché primero (solo si no se fuerza refresh)
+    if (!forceRefresh) {
+      try {
+        const cachedData = await this.dynamoDBService.getFromCache<any>(cacheKey);
+        
+        if (cachedData) {
+          this.logger.debug(`✅ Returning doctor availability from cache for doctor ${doctorId}`);
+          return cachedData;
+        }
+      } catch (cacheError) {
+        this.logger.warn('⚠️ Error al leer caché (continuando con DriCloud):', cacheError.message);
+        // Continuar con DriCloud si el caché falla
+      }
+    }
+    
     try {
       // Llamar directamente a DriCloud con protección automática
       const result = await this.driCloudService.getDoctorAgenda(doctorId, startDate, datesToFetch);
       
       // Validar que la respuesta tenga el formato correcto
       if (!result) {
-        console.warn(`⚠️ DoctorAvailabilityService: respuesta vacía de DriCloud para doctor ${doctorId}`);
+        this.logger.warn(`⚠️ DoctorAvailabilityService: respuesta vacía de DriCloud para doctor ${doctorId}`);
         return { Successful: false, Data: { Disponibilidad: [] } };
+      }
+      
+      // Guardar en caché solo si la respuesta es exitosa
+      if (result.Successful !== false && result.Data?.Disponibilidad) {
+        try {
+          await this.dynamoDBService.setCache(
+            cacheKey,
+            result,
+            this.CACHE_TTL_MINUTES
+          );
+          this.logger.debug(`✅ Doctor availability cached for ${this.CACHE_TTL_MINUTES} minutes`);
+        } catch (cacheError) {
+          this.logger.warn('⚠️ Error al guardar en caché (continuando):', cacheError.message);
+        }
       }
       
       return result;
     } catch (error) {
-      console.error(`❌ Error en DoctorAvailabilityService.getDoctorAgenda:`, error);
+      this.logger.error(`❌ Error en DoctorAvailabilityService.getDoctorAgenda:`, error);
       // Si es un error de DriCloud, devolver estructura válida
       if (error.message && error.message.includes('DriCloud')) {
         return { Successful: false, Data: { Disponibilidad: [] }, Html: error.message };

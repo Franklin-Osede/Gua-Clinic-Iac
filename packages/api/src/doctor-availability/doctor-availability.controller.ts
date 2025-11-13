@@ -11,9 +11,11 @@ export class DoctorAvailabilityController {
   async getDoctorAgenda(
     @Param('doctorId') doctorId: string,
     @Param('startDate') startDate: string,
-    @Query('dates_to_fetch') datesToFetch: number = 31 // Máximo permitido por DriCloud API v2.3
+    @Query('dates_to_fetch') datesToFetch: number = 31, // Máximo permitido por DriCloud API v2.3
+    @Query('refresh') refresh?: string
   ) {
     const doctorIdNum = parseInt(doctorId, 10);
+    const forceRefresh = refresh === 'true';
     
     if (isNaN(doctorIdNum) || doctorIdNum <= 0) {
       console.error(`❌ DoctorAvailabilityController: doctorId inválido: ${doctorId}`);
@@ -25,11 +27,11 @@ export class DoctorAvailabilityController {
       throw new Error(`Invalid startDate: ${startDate}. Expected format: yyyyMMdd or YYYY-MM-DD.`);
     }
     
-    console.log(`🎯 DoctorAvailabilityController.getDoctorAgenda called:`, { doctorId: doctorIdNum, startDate, datesToFetch })
+    console.log(`🎯 DoctorAvailabilityController.getDoctorAgenda called:`, { doctorId: doctorIdNum, startDate, datesToFetch, forceRefresh })
     
     try {
-      // Llamar al servicio real con protección automática
-      const result = await this.doctorAvailabilityService.getDoctorAgenda(doctorIdNum, startDate, datesToFetch);
+      // Llamar al servicio real con protección automática y soporte de caché
+      const result = await this.doctorAvailabilityService.getDoctorAgenda(doctorIdNum, startDate, datesToFetch, forceRefresh);
       return result;
     } catch (error) {
       console.error(`❌ Error en DoctorAvailabilityController.getDoctorAgenda:`, error);

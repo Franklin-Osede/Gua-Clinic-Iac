@@ -67,9 +67,9 @@ const Services: React.FC<ServicePageProps> = ({
         ];
         
         const nameMapping: Record<string, string> = {
-          'urologia': 'Urología',
-          'andrologia': 'Andrología y medicina sexual',
-          'medicinasexual': 'Andrología y medicina sexual',
+          'urologia': 'Urología y Andrología',
+          'andrologia': 'Urología y Andrología',
+          'medicinasexual': 'Urología y Andrología',
           'fisioterapia': 'Fisioterapia',
           'medicinafisica': 'Medicina Rehabilitadora',
           'rehabilitacion': 'Medicina Rehabilitadora',
@@ -125,6 +125,26 @@ const Services: React.FC<ServicePageProps> = ({
               name: displayName,
             };
           });
+        
+        // Consolidar Urología (ID 1) y Andrología (ID 18) en una sola entrada
+        // Ambas se muestran como "Urología y Andrología", así que eliminamos el duplicado
+        const urologiaIndex = formattedOptions.findIndex(s => s.id === 1);
+        const andrologiaIndex = formattedOptions.findIndex(s => s.id === 18);
+        
+        if (urologiaIndex !== -1 && andrologiaIndex !== -1) {
+          // Si ambas están presentes, mantener solo Urología (ID 1) con el nombre consolidado
+          formattedOptions[urologiaIndex].name = 'Urología y Andrología';
+          // Eliminar Andrología (ID 18) ya que es redundante
+          formattedOptions.splice(andrologiaIndex, 1);
+          console.log('✅ Urología y Andrología consolidadas en una sola entrada');
+        } else if (urologiaIndex !== -1) {
+          // Si solo está Urología, cambiar el nombre
+          formattedOptions[urologiaIndex].name = 'Urología y Andrología';
+        } else if (andrologiaIndex !== -1) {
+          // Si solo está Andrología, cambiar el nombre y el ID a 1 (Urología) para consistencia
+          formattedOptions[andrologiaIndex].name = 'Urología y Andrología';
+          formattedOptions[andrologiaIndex].id = 1;
+        }
         
         console.log('✅ Especialidades filtradas:', formattedOptions);
         console.log(`📊 Total de especialidades después del filtro: ${formattedOptions.length}`);

@@ -87,13 +87,13 @@ export const initializeSession = async () => {
   }
 };
 
-// Datos estáticos de fallback (las 6 especialidades principales)
+// Datos estáticos de fallback (las 5 especialidades principales)
 const FALLBACK_SPECIALTIES = [
-  { id: 1, name: 'Urología', ESP_ID: 1, ESP_NOMBRE: 'Urología' },
-  { id: 18, name: 'Andrología y medicina sexual', ESP_ID: 18, ESP_NOMBRE: 'Andrología y medicina sexual' },
+  { id: 1, name: 'Urología y Andrología', ESP_ID: 1, ESP_NOMBRE: 'Urología y Andrología' },
+  { id: 18, name: 'Urología y Andrología', ESP_ID: 18, ESP_NOMBRE: 'Urología y Andrología' },
   { id: 10, name: 'Fisioterapia', ESP_ID: 10, ESP_NOMBRE: 'Fisioterapia' },
-  { id: 9, name: 'Ginecología', ESP_ID: 9, ESP_NOMBRE: 'Ginecología' },
   { id: 6, name: 'Medicina Rehabilitadora', ESP_ID: 6, ESP_NOMBRE: 'Medicina Rehabilitadora' },
+  { id: 9, name: 'Ginecología', ESP_ID: 9, ESP_NOMBRE: 'Ginecología' },
   { id: 19, name: 'Medicina Integrativa', ESP_ID: 19, ESP_NOMBRE: 'Medicina Integrativa' },
 ];
 
@@ -101,7 +101,7 @@ export const getMedicalSpecialties = async (refresh: boolean = false) => {
   const url = refresh ? `/medical-specialties?refresh=true` : `/medical-specialties`;
   const fullUrl = `${getApiBaseUrl()}${url}`;
   
-  // ESTRATEGIA SIMPLE: Retry con 3 intentos (sin over-engineering)
+  // ESTRATEGIA OPTIMIZADA: Retry con 3 intentos con timeouts cortos para WordPress
   const maxRetries = 3;
   let lastError: any = null;
   
@@ -110,8 +110,9 @@ export const getMedicalSpecialties = async (refresh: boolean = false) => {
       console.log(`🌐 Intento ${attempt}/${maxRetries}: Llamando a ${fullUrl}`);
       const startTime = Date.now();
       
-      // Timeout más corto en cada intento (20s, 25s, 30s)
-      const timeout = attempt * 10000 + 10000; // 20s, 30s, 40s
+      // Timeouts optimizados: 8s, 12s, 16s (total máximo ~36s vs 90s anterior)
+      // Esto permite mostrar fallback rápido si el backend está lento
+      const timeout = attempt * 4000 + 4000; // 8s, 12s, 16s
       
       const response = await apiClient.get(url, {
         timeout: timeout,
@@ -189,7 +190,11 @@ export const getAppointmentTypes = async (serviceId: number, type?: string) => {
       ? `/appointments-types/${serviceId}?_type=${type}`
       : `/appointments-types/${serviceId}`;
 
-    const response = await apiClient.get(url);
+    // Timeout optimizado: 15 segundos (consistente con otros endpoints)
+    const response = await apiClient.get(url, {
+      timeout: 15000, // 15 segundos (optimizado para WordPress)
+    });
+    
     // DriCloud devuelve { Successful: true, Data: [...] }
     // Necesitamos extraer el array de tipos de cita
     return response.data.Data || [];
@@ -211,9 +216,10 @@ export const getDoctors = async (serviceId: number) => {
     console.log(`⏳ Iniciando petición GET a /doctors/${serviceId}...`);
     const startTime = Date.now();
     
-    // Aumentar timeout específicamente para doctores (60 segundos) porque puede tardar más en producción
+    // Timeout optimizado: 15 segundos (con caché en backend debería responder <1s)
+    // Si tarda más, probablemente hay un problema y es mejor mostrar error rápido
     const response = await apiClient.get(url, {
-      timeout: 60000, // 60 segundos para doctores
+      timeout: 15000, // 15 segundos (optimizado para WordPress)
     });
     
     const duration = Date.now() - startTime;
@@ -312,8 +318,12 @@ export const getDoctorAgenda = async (
   datesToFetch: number = 31,
 ) => {
   try {
+    // Timeout optimizado: 15 segundos (con caché en backend debería responder rápido)
     const response = await apiClient.get(
       `/doctor-availability/${doctorId}/${startDate}?dates_to_fetch=${datesToFetch}`,
+      {
+        timeout: 15000, // 15 segundos (optimizado para WordPress)
+      }
     );
     
     // DriCloud devuelve { Successful: true, Data: { Disponibilidad: [...] } }

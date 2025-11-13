@@ -40,10 +40,13 @@ export class BootstrapController {
     }
 
     // Establecer cookie httpOnly
+    // IMPORTANTE: SameSite=None + secure para WordPress cross-site
+    // Esto permite que el widget en WordPress reutilice la sesión y evite llamadas extra
+    const isProduction = process.env.NODE_ENV === 'production';
     res.cookie('sessionId', session.sessionId, {
       httpOnly: true, // No accesible desde JavaScript
-      secure: process.env.NODE_ENV === 'production', // Solo HTTPS en producción
-      sameSite: 'strict', // Protección CSRF
+      secure: isProduction, // Requerido cuando SameSite=None
+      sameSite: isProduction ? 'none' : 'lax', // 'none' para WordPress cross-site, 'lax' para desarrollo
       maxAge: 30 * 60 * 1000, // 30 minutos
       path: '/', // Disponible en toda la aplicación
     });

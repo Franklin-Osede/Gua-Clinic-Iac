@@ -16,8 +16,10 @@ export class DoctorsController {
 
   @Post('preload-cache')
   async preloadCache() {
-    // Pre-cargar caché para las especialidades más comunes
-    const commonServiceIds = [1, 8, 9, 10, 18]; // Urología, Psicología, Ginecología, Fisioterapia, Andrología
+    // Pre-cargar caché para las 5 especialidades activas
+    // Especialidades: 1) Urología y Andrología, 2) Fisioterapia, 3) Medicina Rehabilitadora, 4) Ginecología, 5) Medicina Integrativa
+    // Nota: Incluimos tanto Urología (1) como Andrología (18) porque comparten los mismos profesionales
+    const commonServiceIds = [1, 18, 10, 6, 9, 19]; // Urología, Andrología, Fisioterapia, Medicina Rehabilitadora, Ginecología, Medicina Integrativa
     const results = [];
     
     for (const serviceId of commonServiceIds) {

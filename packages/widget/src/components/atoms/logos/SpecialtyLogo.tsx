@@ -1,4 +1,5 @@
 import { FC, useState, useEffect, useMemo } from "react";
+import { getCdnBaseUrl } from "../../../config/api.config";
 
 interface SpecialtyLogoProps {
   specialtyName: string;
@@ -28,78 +29,87 @@ const normalizeSpecialtyName = (name: string): string => {
 
 // Mapeo de especialidades a logos
 // Prioridad: 1) Carpeta local /logos/, 2) CDN, 3) Componente React
-const CDN_BASE_URL = 'https://cdn.gua.com';
 const LOCAL_LOGOS_PATH = '/logos'; // Carpeta public/logos/
 
-const SVG_MAP: Record<string, { local: string; cdn: string; fallback: FC<{ disabled: boolean }> }> = {
+// Función para construir URL del CDN dinámicamente
+const getCdnUrl = (logoPath: string): string => {
+  const cdnBase = getCdnBaseUrl();
+  if (cdnBase) {
+    return `${cdnBase}/logos/${logoPath}`;
+  }
+  // Fallback a S3 si no hay CDN configurado
+  return `https://cdn-gua-com.s3.eu-north-1.amazonaws.com/logos/${logoPath}`;
+};
+
+const SVG_MAP: Record<string, { local: string; getCdn: () => string; fallback: FC<{ disabled: boolean }> }> = {
   'urologia': { 
     local: `${LOCAL_LOGOS_PATH}/UROLOGÍA.svg`,
-    cdn: `${CDN_BASE_URL}/logos/UROLOGÍA.svg`, 
+    getCdn: () => getCdnUrl('UROLOGÍA.svg'),
     fallback: UrologyLogo 
   },
   'andrologia': { 
     local: `${LOCAL_LOGOS_PATH}/Andrología.svg`,
-    cdn: `${CDN_BASE_URL}/logos/Andrología.svg`, 
+    getCdn: () => getCdnUrl('Andrología.svg'),
     fallback: AndrologyLogo 
   },
   'andrologiaymedicinasexual': { 
     local: `${LOCAL_LOGOS_PATH}/Andrología.svg`,
-    cdn: `${CDN_BASE_URL}/logos/Andrología.svg`, 
+    getCdn: () => getCdnUrl('Andrología.svg'),
     fallback: AndrologyLogo 
   },
   'medicinasexual': { 
     local: `${LOCAL_LOGOS_PATH}/Andrología.svg`,
-    cdn: `${CDN_BASE_URL}/logos/Andrología.svg`, 
+    getCdn: () => getCdnUrl('Andrología.svg'),
     fallback: AndrologyLogo 
   },
   'ginecologia': { 
     local: `${LOCAL_LOGOS_PATH}/ginecología.svg`,
-    cdn: `${CDN_BASE_URL}/logos/ginecología.svg`, 
+    getCdn: () => getCdnUrl('ginecología.svg'),
     fallback: GynecologyLogo 
   },
   'fisioterapia': { 
     local: `${LOCAL_LOGOS_PATH}/Fisioterapia.svg`,
-    cdn: `${CDN_BASE_URL}/logos/Fisioterapia.svg`, 
+    getCdn: () => getCdnUrl('Fisioterapia.svg'),
     fallback: PhysicalTherapyLogo 
   },
   'psicologia': { 
     local: `${LOCAL_LOGOS_PATH}/psicología.svg`,
-    cdn: `${CDN_BASE_URL}/logos/psicología.svg`, 
+    getCdn: () => getCdnUrl('psicología.svg'),
     fallback: PsychologyLogo 
   },
   'medicinafisica': { 
     local: `${LOCAL_LOGOS_PATH}/Medicina Física y rehabilitadora.svg`,
-    cdn: `${CDN_BASE_URL}/logos/Medicina Física y rehabilitadora.svg`, 
+    getCdn: () => getCdnUrl('Medicina Física y rehabilitadora.svg'),
     fallback: PhysicalTherapyLogo 
   },
   'medicinarehabilitadora': { 
     local: `${LOCAL_LOGOS_PATH}/Medicina Física y rehabilitadora.svg`,
-    cdn: `${CDN_BASE_URL}/logos/Medicina Física y rehabilitadora.svg`, 
+    getCdn: () => getCdnUrl('Medicina Física y rehabilitadora.svg'),
     fallback: PhysicalTherapyLogo 
   },
   'rehabilitacion': { 
     local: `${LOCAL_LOGOS_PATH}/Medicina Física y rehabilitadora.svg`,
-    cdn: `${CDN_BASE_URL}/logos/Medicina Física y rehabilitadora.svg`, 
+    getCdn: () => getCdnUrl('Medicina Física y rehabilitadora.svg'),
     fallback: PhysicalTherapyLogo 
   },
   'medicinaintegrativa': { 
     local: `${LOCAL_LOGOS_PATH}/medicina integrativa.svg`,
-    cdn: `${CDN_BASE_URL}/logos/medicina integrativa.svg`, 
+    getCdn: () => getCdnUrl('medicina integrativa.svg'),
     fallback: IntegrativeMedicineLogo 
   },
   'medicinapreventiva': { 
     local: `${LOCAL_LOGOS_PATH}/medicina integrativa.svg`,
-    cdn: `${CDN_BASE_URL}/logos/medicina integrativa.svg`, 
+    getCdn: () => getCdnUrl('medicina integrativa.svg'),
     fallback: IntegrativeMedicineLogo 
   },
   'laboratorio': { 
     local: `${LOCAL_LOGOS_PATH}/laboratorio.svg`,
-    cdn: `${CDN_BASE_URL}/logos/laboratorio.svg`, 
+    getCdn: () => getCdnUrl('laboratorio.svg'),
     fallback: LaboratoryLogo 
   },
   'pruebasdiagnosticas': { 
     local: `${LOCAL_LOGOS_PATH}/pruebas diagnosticas.svg`,
-    cdn: `${CDN_BASE_URL}/logos/pruebas diagnosticas.svg`, 
+    getCdn: () => getCdnUrl('pruebas diagnosticas.svg'),
     fallback: DiagnosticTestsLogo 
   },
 };
@@ -120,7 +130,7 @@ export const SpecialtyLogo: FC<SpecialtyLogoProps> = ({ specialtyName, disabled 
     // Ordenar claves de más específicas a menos específicas para evitar matches incorrectos
     const sortedKeys = Object.keys(SVG_MAP).sort((a, b) => b.length - a.length); // Más largas primero
     
-    let foundLogoInfo: { local: string; cdn: string; fallback: FC<{ disabled: boolean }> } | null = null;
+    let foundLogoInfo: { local: string; getCdn: () => string; fallback: FC<{ disabled: boolean }> } | null = null;
     let matchedKey: string | null = null;
     
     for (const key of sortedKeys) {
@@ -211,7 +221,9 @@ export const SpecialtyLogo: FC<SpecialtyLogoProps> = ({ specialtyName, disabled 
     if (!triedCDN) {
       // Si falla la carga local, intentar CDN
       console.log(`⚠️ No se pudo cargar logo desde carpeta local para "${specialtyName}", intentando CDN...`);
-      setImageSrc(logoInfo.cdn);
+      const cdnUrl = logoInfo.getCdn();
+      console.log(`🔗 Intentando CDN: ${cdnUrl}`);
+      setImageSrc(cdnUrl);
       setTriedCDN(true);
     } else {
       // Si también falla CDN, usar componente React
