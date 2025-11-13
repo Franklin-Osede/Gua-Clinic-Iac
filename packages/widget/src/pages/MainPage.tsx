@@ -93,12 +93,22 @@ const MainPage: React.FC = () => {
     setShowPreviousButton(true);
     setShowNoOptionError(false);
     setPageState((prev) => {
-      const updatedPage = {
+      // Determinar si hay una selección válida
+      // Para el calendario (página 4), necesitamos tanto activeId como name válidos
+      const hasValidSelection: boolean = activeId !== null && !!name && name.length > 0;
+      
+      const updatedPage: PageState = {
         activeId: activeId,
-        isClicked: name ? name.length > 0 && activeId !== null : true,
-        ...(name && { name }),
-        ...(extra && { extra }),
+        isClicked: hasValidSelection,
       };
+      
+      // Agregar name y extra solo si están definidos
+      if (name !== undefined && name !== null && name !== "") {
+        updatedPage.name = name;
+      }
+      if (extra !== undefined && extra !== null) {
+        updatedPage.extra = extra;
+      }
 
       return {
         ...prev,
@@ -439,7 +449,7 @@ const MainPage: React.FC = () => {
         return (
           <CalendarDatePicker
             activeTimeId={page.activeId}
-            isDisabled={page.isClicked}
+            isDisabled={isLoadingAppointment || isLoadingPatient}
             serviceChoice={pageState.pages[SPECIALTIES_PAGE_INDEX].name ?? ""}
             onDateTimeChosen={handleCardClick}
             activeDate={String(page.extra) ?? ""}

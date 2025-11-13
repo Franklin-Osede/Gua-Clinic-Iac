@@ -3,7 +3,6 @@ import Calendar from "react-calendar";
 import TimeButton from "../atoms/buttons/TimeButton.tsx";
 import { getDoctorAgenda } from "../../services/GuaAPIService.ts";
 import {
-  convertTo24HourFormat,
   formatDateToLocaleString,
   formatStringFromDate,
 } from "@gua/shared";
@@ -47,14 +46,20 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
    * Parsea los datos de disponibilidad de DriCloud
    * Formato esperado: "yyyyMMddHHmm:<MinCita>:<DES_ID>:<USU_ID>"
    * Ejemplo: "202501151000:30:1:1" = 15 Ene 2025 a las 10:00 (30 min, despacho 1, doctor 1)
+   * 
+   * IMPORTANTE: Esta función ahora usa fullAvailableData del estado, no recibe parámetros
+   * para evitar que llamadas individuales sobrescriban el conjunto acumulado.
    */
-  const parseAvailableDates = useCallback((data: string[]) => {
+  const parseAvailableDates = useCallback(() => {
     const now = new Date();
     now.setHours(0, 0, 0, 0); // Resetear horas para comparar solo fechas
     
+    // Usar el estado acumulado fullAvailableData en lugar de parámetros
+    const data = fullAvailableData;
+    
     if (!data || !Array.isArray(data) || data.length === 0) {
-      console.warn('⚠️ parseAvailableDates: datos vacíos o inválidos');
-      setAvailableDates([]);
+      // Solo mostrar warning si realmente no hay datos después de todas las cargas
+      // No resetear availableDates aquí para evitar deshabilitar fechas válidas
       return;
     }
     
@@ -114,7 +119,7 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
     const finalUniqueDates = Array.from(uniqueDatesMap.values())
       .sort((a, b) => a.getTime() - b.getTime());
 
-    console.log(`✅ parseAvailableDates: ${finalUniqueDates.length} fechas únicas encontradas de ${data.length} slots`);
+    console.log(`✅ parseAvailableDates: ${finalUniqueDates.length} fechas únicas encontradas de ${data.length} slots acumulados`);
     setAvailableDates(finalUniqueDates);
 
     if (finalUniqueDates.length > 0) {
@@ -124,7 +129,7 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
     } else {
       setActiveStartDate(new Date(now.getFullYear(), now.getMonth(), 1));
     }
-  }, []);
+  }, [fullAvailableData]);
 
   const fetchAvailability = useCallback(
     async (date: Date, datesToFetch: number = 3) => {
@@ -178,6 +183,15 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
     }
   }, [showMonthPicker]);
 
+  // Efecto que actualiza availableDates cuando fullAvailableData cambia
+  // Esto asegura que siempre se use el conjunto completo acumulado
+  useEffect(() => {
+    if (fullAvailableData.length > 0) {
+      console.log(`📅 fullAvailableData actualizado: ${fullAvailableData.length} slots acumulados`);
+      parseAvailableDates();
+    }
+  }, [fullAvailableData, parseAvailableDates]);
+
   useEffect(() => {
     console.log('📅 CalendarDatePicker montado/actualizado:', { doctorId, activeDate });
     
@@ -215,18 +229,15 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
           sample: data?.slice(0, 3) 
         });
 
-        // Actualizar fechas disponibles inmediatamente cuando lleguen los primeros datos
-        if (data && Array.isArray(data) && data.length > 0) {
-          parseAvailableDates(data);
-        } else {
+        // No llamar parseAvailableDates aquí - el useEffect de fullAvailableData lo hará
+        if (!data || !Array.isArray(data) || data.length === 0) {
           console.warn('⚠️ No hay datos disponibles para el doctor:', doctorId);
         }
 
         // Cargar 7 días en paralelo inmediatamente (sin esperar)
         fetchAvailability(currentDate, 7).then(additionalData => {
           if (additionalData && additionalData.length > 0) {
-            console.log('📅 Datos adicionales (7 días) recibidos');
-            parseAvailableDates(additionalData);
+            console.log('📅 Datos adicionales (7 días) recibidos y acumulados');
           }
         }).catch(error => {
           console.warn('⚠️ Error cargando datos adicionales (no crítico):', error);
@@ -237,8 +248,7 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
           try {
             const moreData = await fetchAvailability(currentDate, 14);
             if (moreData && moreData.length > 0) {
-              console.log('📅 Datos adicionales (14 días) recibidos');
-              parseAvailableDates(moreData);
+              console.log('📅 Datos adicionales (14 días) recibidos y acumulados');
             }
           } catch (error) {
             console.warn('⚠️ Error cargando datos adicionales (no crítico):', error);
@@ -250,8 +260,9 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
           try {
             const fullData = await fetchAvailability(currentDate, 31);
             if (fullData && fullData.length > 0) {
-              console.log('📅 Datos completos (31 días) recibidos');
-              parseAvailableDates(fullData);
+              console.log('📅 Datos completos (31 días) recibidos y acumulados');
+            } else {
+              console.warn('⚠️ La llamada de 31 días no devolvió datos, pero las anteriores pueden tener datos válidos');
             }
           } catch (error) {
             console.warn('⚠️ Error cargando datos completos (no crítico):', error);
@@ -264,7 +275,7 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
     };
 
     initialize().then();
-  }, [doctorId, fetchAvailability, parseAvailableDates]);
+  }, [doctorId, fetchAvailability]);
 
   /**
    * Filtra y formatea los horarios disponibles para una fecha específica
@@ -354,7 +365,8 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
             1,
           );
           
-          const data = await fetchAvailability(firstDayOfMonth);
+          // fetchAvailability acumulará los datos y parseAvailableDates se llamará automáticamente
+          await fetchAvailability(firstDayOfMonth, 31);
           
           // Si hay una fecha seleccionada, mantenerla seleccionada pero actualizar disponibilidad
           if (selectedDate instanceof Date) {
@@ -368,7 +380,7 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
             }
           }
           
-          parseAvailableDates(data);
+          // parseAvailableDates se llamará automáticamente cuando fullAvailableData se actualice
         } catch (error) {
           console.error('❌ Error refrescando disponibilidad:', error);
         }
@@ -376,7 +388,15 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
       
       refreshAvailability();
     }
-  }, [refreshKey, doctorId]);
+  }, [refreshKey, doctorId, fetchAvailability]);
+
+  // Monitorear cambios en activeTimeId para debugging
+  useEffect(() => {
+    if (activeTimeId !== null) {
+      const selectedDateStr = selectedDate instanceof Date ? selectedDate.toDateString() : null;
+      console.log('✅ Hora activa:', { activeTimeId, fecha: selectedDateStr });
+    }
+  }, [activeTimeId, selectedDate]);
 
   useEffect(() => {
     // Si hay una fecha activa desde el componente padre, intentar hacer match
@@ -403,6 +423,36 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
       setLoadingTime(false);
     }
   }, [activeDate, availableDates, filterAvailableTimes, selectedDate]);
+
+  /**
+   * Maneja el clic directo en un día del calendario
+   * Permite deseleccionar si se hace clic en la misma fecha
+   */
+  const handleDayClick = (value: Date) => {
+    // Normalizar fechas para comparar solo día/mes/año
+    const clickedDateNormalized = new Date(value);
+    clickedDateNormalized.setHours(0, 0, 0, 0);
+
+    // Verificar si se está haciendo clic en la misma fecha (deselección)
+    if (selectedDate instanceof Date) {
+      const currentSelectedNormalized = new Date(selectedDate);
+      currentSelectedNormalized.setHours(0, 0, 0, 0);
+      
+      if (currentSelectedNormalized.getTime() === clickedDateNormalized.getTime()) {
+        // Deseleccionar fecha
+        console.log('🔄 Deseleccionando fecha (clic en fecha ya seleccionada)');
+        setSelectedDate(null);
+        setAvailableTimes([]);
+        setDateChosen("");
+        setDateString("");
+        onDateTimeChosen(null, "", "");
+        return;
+      }
+    }
+
+    // Si no es la misma fecha, proceder con la selección normal
+    handleDateChange(value);
+  };
 
   /**
    * Maneja el cambio de fecha seleccionada en el calendario
@@ -450,17 +500,26 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
     const fullDateString = yearMonthDayFormat;
     setDateString(fullDateString);
 
-    // Si hay una hora previamente seleccionada y sigue disponible, mantenerla
-    if (activeTimeId !== null && times.length > 0 && activeTimeId < times.length) {
-      const fullDateStringWithTime = yearMonthDayFormat + convertTo24HourFormat(times[activeTimeId]);
-      setDateString(fullDateStringWithTime);
-      const fullDateTitle = `${times[activeTimeId]} · ${formattedDate}`;
-      onDateTimeChosen(activeTimeId, fullDateTitle, fullDateStringWithTime);
-    } else {
-      // Si no hay hora seleccionada o ya no está disponible, limpiar
-      onDateTimeChosen(null, formattedDate, fullDateString);
-    }
+    // Limpiar la selección de hora cuando se cambia de fecha
+    onDateTimeChosen(null, formattedDate, fullDateString);
   };
+
+  /**
+   * Maneja la selección/deselección de horas
+   * Permite deseleccionar si se hace clic en la misma hora
+   */
+  const handleTimeClick = useCallback((id: number | null, fullDateName: string, fullDateString: string) => {
+    // Si se hace clic en la misma hora seleccionada, deseleccionar
+    if (activeTimeId === id && id !== null) {
+      console.log('🔄 Deseleccionando hora');
+      // Limpiar la selección de hora pero mantener la fecha
+      onDateTimeChosen(null, dateChosen, dateString);
+    } else if (id !== null) {
+      // Seleccionar nueva hora (solo si no es null)
+      console.log('✅ Hora seleccionada:', fullDateName);
+      onDateTimeChosen(id, fullDateName, fullDateString);
+    }
+  }, [activeTimeId, dateChosen, dateString, onDateTimeChosen]);
 
   /**
    * Determina si una fecha debe estar deshabilitada en el calendario
@@ -570,8 +629,8 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
       activeStartDate.getMonth(),
       1,
     );
-    const data = await fetchAvailability(firstDayOfMonth);
-    parseAvailableDates(data);
+    // fetchAvailability acumulará los datos y parseAvailableDates se llamará automáticamente
+    await fetchAvailability(firstDayOfMonth, 31);
   };
 
   return (
@@ -634,7 +693,17 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
         ) : (
             <Calendar
               locale="es-ES"
-              onChange={handleDateChange}
+              onChange={(value) => {
+                // onChange se dispara cuando cambias de mes o navegas
+                // onClickDay maneja los clics en días específicos
+                if (value instanceof Date) {
+                  // Solo procesar si no hay selectedDate o es diferente
+                  if (!selectedDate || !(selectedDate instanceof Date) || selectedDate.toDateString() !== value.toDateString()) {
+                    handleDateChange(value);
+                  }
+                }
+              }}
+              onClickDay={handleDayClick}
               value={selectedDate}
               tileClassName={tileClassName}
               tileDisabled={isDateDisabled}
@@ -974,18 +1043,26 @@ const CalendarDatePicker: React.FC<calendarDateProps> = ({
             justifyContent: 'flex-start',
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
           }}>
-            {availableTimes.map((time, index) => (
-              <TimeButton
-                key={`${dateString}-${index}-${time}`}
-                time={time}
-                id={index}
-                onClick={onDateTimeChosen}
-                activeTime={activeTimeId === index}
-                isDisabled={isDisabled}
-                dateNameChosen={dateChosen}
-                dateStringChosen={dateString}
-              />
-            ))}
+            {availableTimes.map((time, index) => {
+              const isActive = activeTimeId === index;
+              // Deshabilitar otras horas cuando hay una seleccionada (excepto la seleccionada)
+              const hasOtherTimeSelected = activeTimeId !== null && !isActive;
+              const isButtonDisabled = isDisabled || hasOtherTimeSelected;
+              
+              return (
+                <TimeButton
+                  key={`${dateString}-${index}-${time}`}
+                  time={time}
+                  id={index}
+                  onClick={handleTimeClick}
+                  activeTime={isActive}
+                  isDisabled={isButtonDisabled}
+                  hasOtherTimeSelected={hasOtherTimeSelected}
+                  dateNameChosen={dateChosen}
+                  dateStringChosen={dateString}
+                />
+              );
+            })}
           </div>
         )}
       </div>
